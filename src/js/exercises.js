@@ -440,6 +440,7 @@ function evalTest(ex, src, t, n, total) {
     (t.outNot || []).forEach(s => { if (normOut(r.out).indexOf(s) >= 0) fail(nm + ': the output should not contain "' + s + '".', { got: normOut(r.out) }); });
     if (t.ret !== undefined) { if (!matchesWant(r.ret, t.ret)) fail(nm + ': ' + t.call + '(' + (t.args || []).map(fmtVal).join(', ') + ') returned ' + fmtVal(r.ret) + ' but should return ' + wantText(t.ret) + '.'); }
     if (t.arrays) t.arrays.forEach((want, i) => { if (want && JSON.stringify(r.arrays && r.arrays[i]) !== JSON.stringify(want)) fail(nm + ': after ' + t.call + '(...) the array should contain ' + fmtVal(want) + ' but contains ' + fmtVal(r.arrays && r.arrays[i]) + '.'); });
+    if (t.strings) t.strings.forEach((want, i) => { if (want !== null && want !== undefined && (r.strings && r.strings[i]) !== want) fail(nm + ': after ' + t.call + '(...) the string should be "' + want + '" but it is "' + (r.strings && r.strings[i]) + '".'); });
     Object.keys(t.expect || {}).forEach(k => { const want = t.expect[k], got = r.get(k); if (!matchesWant(got, want)) fail(nm + ': ' + k + ' is ' + fmtVal(got) + ' but should be ' + wantText(want) + '.'); });
     Object.keys(t.globals || {}).forEach(k => { const want = t.globals[k], got = r.global(k); if (got === undefined) fail(nm + ": the global variable '" + k + "' is missing."); else if (!matchesWant(got, want)) fail(nm + ': the variable ' + k + ' is ' + fmtVal(got) + ' but should be ' + wantText(want) + '.'); });
     (t.at || []).forEach(a => {

@@ -1503,13 +1503,14 @@ function run(src, opts) {
       if (!fn) throw new CError("The function '" + opts.call + "' is missing. The tests call a function with this exact name.", 0, 'compile');
       const args = (opts.args || []).map((a, i) => {
         const pt = fn.t.params[i];
-        if (typeof a === 'string' && pt && pt.k === 'ptr') { const node = { bytes: Array.from(a).map(c => c.charCodeAt(0) & 255) }; const ad = rt.galloc(node.bytes.length + 1); node.bytes.forEach((b, k) => { rt.bytes[ad + k] = b; }); rt.bytes[ad + node.bytes.length] = 0; return { t: ptr(T.char), v: ad }; }
+        if (typeof a === 'string' && pt && pt.k === 'ptr') { const node = { bytes: Array.from(a).map(c => c.charCodeAt(0) & 255) }; const ad = rt.galloc(node.bytes.length + 1); node.bytes.forEach((b, k) => { rt.bytes[ad + k] = b; }); rt.bytes[ad + node.bytes.length] = 0; res.argStrings = res.argStrings || []; res.argStrings[i] = ad; return { t: ptr(T.char), v: ad, arrN: node.bytes.length + 1 }; }
         if (Array.isArray(a) && pt && pt.k === 'ptr') { const es = sizeOf(pt.to); const ad = rt.galloc(a.length * es); a.forEach((x, k) => rt.store(pt.to, ad + k * es, wrapInt(x, pt.to))); res.argArrays = res.argArrays || []; res.argArrays[i] = { addr: ad, n: a.length, t: pt.to }; return { t: pt, v: ad, arrN: a.length }; }
         return { t: typeof a === 'number' && !Number.isInteger(a) ? T.float : T.long, v: a };
       });
       const r = rt.callFn(fn, args, fn.line);
       res.ret = r.t.k === 'ptr' && opts.retString ? rt.readStr(r.v) : r.v;
       res.retType = r.t;
+      if (res.argStrings) res.strings = res.argStrings.map(ad => ad === undefined ? null : rt.readStr(ad));
       if (res.argArrays) res.arrays = res.argArrays.map(x => x ? Array.from({ length: x.n }, (_, k) => rt.load(x.t, x.addr + k * sizeOf(x.t))) : null);
       res.halted = 'return';
     } else {

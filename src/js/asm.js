@@ -274,6 +274,7 @@ function run(src, opts) {
     else if (k === 'analog') Object.keys(v).forEach(ch => { m.analog[+ch] = v[ch]; });
     else if (k === 'vrefP') m.vrefP = v; else if (k === 'vrefM') m.vrefM = v;
     else if (k === 'Z') P.setFlag(m, 2, v); else if (k === 'C') P.setFlag(m, 0, v); else if (k === 'DC') P.setFlag(m, 1, v);
+    else if (/^RAM\[(0x[0-9a-f]+|\d+)\]$/i.test(k)) m.ram[P.canon(parseInt(/^RAM\[(.*)\]$/i.exec(k)[1]))] = v & 255;
     else if (has(BITS, k.toUpperCase())) { const b = BITS[k.toUpperCase()]; const a = P.canon(SFR[b[0]]); m.ram[a] = v ? m.ram[a] | (1 << b[1]) : m.ram[a] & ~(1 << b[1]); }
     else { const a = nameAddr(k); if (a !== null) m.ram[P.canon(a)] = v & 255; }
   });
