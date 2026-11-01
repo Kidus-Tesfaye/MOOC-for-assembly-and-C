@@ -46,6 +46,8 @@ simulator and, in `index.html`, the C interpreter). No server, no account and no
 * **Mathematics:** every calculation and symbol is written in LaTeX and rendered with KaTeX.
 * **Look:** Space Grotesk headings, Inter text and JetBrains Mono code, a circuit-board pattern, and an
   accent colour per course (indigo for Assembly and C, emerald for Assembly).
+* **Dark mode:** the moon/sun button at the top of every page switches between light and dark. The choice
+  is remembered in the browser; until you choose, the course follows the light or dark setting of your computer.
 
 The curricula are described in [`docs/curriculum.md`](docs/curriculum.md) (Assembly and C) and
 [`docs/curriculum-assembly.md`](docs/curriculum-assembly.md) (Assembly).

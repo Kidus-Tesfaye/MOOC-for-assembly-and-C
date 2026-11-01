@@ -72,6 +72,23 @@ async function doLoad() {
 }
 
 /* ---------- chrome ---------- */
+/* ---------- light and dark mode: remembered in this browser, otherwise the system setting ---------- */
+const MODE_KEY = 'pic-courses-mode';
+function savedMode() { try { return root.localStorage.getItem(MODE_KEY); } catch (e) { return null; } }
+function currentMode() { return document.documentElement.getAttribute('data-mode') === 'dark' ? 'dark' : 'light'; }
+function applyMode(m) { document.documentElement.setAttribute('data-mode', m); }
+function initMode() {
+  const m = savedMode();
+  const sys = root.matchMedia && root.matchMedia('(prefers-color-scheme: dark)');
+  applyMode(m === 'dark' || m === 'light' ? m : (sys && sys.matches ? 'dark' : 'light'));
+  if (sys && sys.addEventListener) sys.addEventListener('change', e => { if (!savedMode()) { applyMode(e.matches ? 'dark' : 'light'); drawTop(); } });
+}
+function toggleMode() {
+  const m = currentMode() === 'dark' ? 'light' : 'dark';
+  applyMode(m);
+  try { root.localStorage.setItem(MODE_KEY, m); } catch (e) { /* storage blocked: the mode lasts until the page is closed */ }
+  drawTop();
+}
 function crumbs() {
   const c = root.__cur || {};
   const sep = () => el('span', { class: 'cr-sep', 'aria-hidden': 'true', text: '/' });
@@ -91,6 +108,7 @@ function drawTop() {
     el('button', { class: 'mbtn menu-btn', type: 'button', onclick: () => document.body.classList.add('menu-open') }, icon('menu'), 'Menu'),
     crumbs(),
     el('div', { class: 'top-actions' },
+      el('button', { class: 'mbtn mode-btn', type: 'button', onclick: toggleMode, title: currentMode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode', 'aria-label': currentMode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode' }, icon(currentMode() === 'dark' ? 'sun' : 'moon')),
       el('button', { class: 'mbtn', type: 'button', onclick: doSave, title: 'Save your progress to a file on this computer' }, icon('save'), el('span', { class: 'lbl' }, 'Save', el('span', { class: 'lbl-x', text: ' progress' })), unsaved ? el('span', { class: 'badge-dot', title: unsaved + ' change(s) not yet saved to a file', text: unsaved > 99 ? '99+' : String(unsaved) }) : null),
       el('button', { class: 'mbtn', type: 'button', onclick: doLoad, title: 'Load progress from a file you saved before' }, icon('load'), el('span', { class: 'lbl' }, 'Load', el('span', { class: 'lbl-x', text: ' progress' })))));
   const blob = $('#points-blob');
@@ -368,6 +386,7 @@ MOOC.selfTest = function (filter) {
 };
 
 function boot() {
+  initMode();
   indexCourse();
   const app = $('#app');
   app.append(el('nav', { id: 'sidebar', 'aria-label': 'Course contents' }), el('div', { class: 'menu-backdrop', onclick: () => document.body.classList.remove('menu-open') }),
