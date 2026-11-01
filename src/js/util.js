@@ -2,6 +2,8 @@
 (function (root) {
 'use strict';
 const MOOC = root.MOOC = { parts: [], pages: [], version: 2 };
+/* the course being built (title, storage key, ...): set by build.py; defaults are those of index.html */
+const CFG = MOOC.config = Object.assign({ title: 'Assembly and C Programming MOOC', storageKey: 'asm-c-mooc-progress-v1', appId: 'assembly-and-c-mooc', filePrefix: 'asm-c-mooc-progress-', groups: { 1: 'Introduction to Programming', 2: 'Advanced Course in Programming' } }, root.MOOC_CONFIG || {});
 
 /* ---------- DOM helpers ---------- */
 function el(tag, props, ...kids) {
@@ -36,12 +38,14 @@ const ICON = {
   menu: '<svg viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg>',
   save: '<svg viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V173.3c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32H64zm0 96c0-17.7 14.3-32 32-32H288c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V128zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>',
   load: '<svg viewBox="0 0 576 512" aria-hidden="true"><path fill="currentColor" d="M88.7 223.8L0 375.8V96C0 60.7 28.7 32 64 32H181.5c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7H416c35.3 0 64 28.7 64 64v32H144c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224H544c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480H32c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/></svg>',
-  github: '',
+  chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/><path d="M10 10h4v4h-4z"/></g></svg>',
+  star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>',
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
   check: '<svg viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>'
 };
 const icon = (n, cls) => { const s = el('span', { class: 'ico' + (cls ? ' ' + cls : ''), html: ICON[n] || '' }); return s; };
 
-/* ---------- syntax highlighting (Prism default colours, as on the course site) ---------- */
+/* ---------- syntax highlighting (token classes tk-*, coloured by the stylesheet) ---------- */
 let ASM_INS = null;
 const ASM_DIR = /^(ORG|EQU|SET|END|PSECT|CONFIG|GLOBAL|PROCESSOR|BANKSEL|PAGESEL|HIGH|LOW|BANKMASK)$/i;
 const ASM_RE = /(;[^\n]*)|(^[ \t]*#[ \t]*(?:include|define)\b)|('[^'\n]*'|"[^"\n]*"|<[^>\n]*\.inc>)|(^[ \t]*[A-Za-z_]\w*:)|\b(0[xX][0-9A-Fa-f]+|[hHbBdD]'[0-9A-Fa-f]+'|[0-9][0-9A-Fa-f]*[hH]|[01]+[bB]|[0-9]+[dD]?)\b|([A-Za-z_][A-Za-z0-9_]*)|(\$)|([,()+\-*\/])/gm;
@@ -120,7 +124,8 @@ function codeBlock(text, lang, opts) {
   const lines = highlight(String(text).replace(/\n+$/, ''), lang);
   const start = opts.start || 1;
   const html = lines.map((l, i) => (opts.lines ? '<span class="ln">' + (start + i) + '</span>' : '') + l).join('\n');
-  return el('div', { class: 'code-wrap' }, el('pre', { class: 'code lang-' + (lang || 'text') }, el('code', { html })));
+  const label = opts.label !== undefined ? opts.label : ({ asm: 'Assembly', c: 'C' }[lang] || '');
+  return el('div', { class: 'code-wrap', 'data-lang': label || null }, el('pre', { class: 'code lang-' + (lang || 'text') }, el('code', { html })));
 }
 
 /* ---------- LaTeX: $...$ inline and $$...$$ display, rendered with KaTeX ---------- */
@@ -167,8 +172,8 @@ function renderMath(rootEl) {
 }
 
 /* ---------- progress storage: automatic save in the browser + save/load to a file ---------- */
-const KEY = 'asm-c-mooc-progress-v1';
-const APP_ID = 'assembly-and-c-mooc';
+const KEY = CFG.storageKey;
+const APP_ID = CFG.appId;
 let mem = null, listeners = [], storageOk = null, lastLocalSave = null;
 function freshState() { return { app: APP_ID, version: 1, created: new Date().toISOString(), ex: {}, pos: null, visited: {}, fileSavedAt: null, changesSinceFile: 0 }; }
 function probeStorage() {
@@ -204,6 +209,7 @@ const Store = {
   parseImport(text) {
     let d;
     try { d = JSON.parse(text); } catch (e) { throw new Error('This file is not a progress file (it is not valid JSON).'); }
+    if (d && CFG.sibling && d.app === CFG.sibling.appId) throw new Error('This file holds your progress in the other course, the ' + CFG.sibling.title + '. Load it in that course (' + CFG.sibling.href + ') instead.');
     if (!d || d.app !== APP_ID || typeof d.ex !== 'object') throw new Error('This file is not a progress file of this course.');
     return d;
   },
@@ -237,7 +243,7 @@ const Store = {
 let fileHandle = null;
 async function saveToFile() {
   const data = Store.exportData();
-  const name = 'asm-c-mooc-progress-' + new Date().toISOString().slice(0, 10) + '.json';
+  const name = CFG.filePrefix + new Date().toISOString().slice(0, 10) + '.json';
   if (root.showSaveFilePicker && root.isSecureContext !== false) {
     try {
       if (!fileHandle) fileHandle = await root.showSaveFilePicker({ suggestedName: name, types: [{ description: 'Course progress', accept: { 'application/json': ['.json'] } }] });

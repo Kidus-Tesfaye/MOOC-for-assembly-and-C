@@ -643,8 +643,8 @@ function buildExercise(ex, hooks) {
   const pts = el('span', { class: 'pt-got', text: saved.done ? '1' : '0' });
   const head = el('div', { class: 'ex-head' },
     el('span', { class: 'ex-ico', html: MOOC.ICON[isProg ? 'pencil' : 'quiz'] }),
-    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: (isProg ? 'Programming exercise' : 'Quiz') + (isProg ? ' (' + (ex.lang === 'asm' ? 'assembly' : 'C') + '):' : ':') }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
-    el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points:' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
+    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: isProg ? 'Programming exercise · ' + (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz' }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
+    el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
   const body = el('div', { class: 'ex-body' });
   body.append(el('div', { class: 'q', html: ex.q }));
   if (ex.snippet) body.append(codeBlock(ex.snippet.text, ex.snippet.lang, ex.snippet.lines ? { lines: true } : null));
