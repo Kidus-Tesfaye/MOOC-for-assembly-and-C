@@ -102,7 +102,7 @@ function navItem(href, label, active, extra) {
 function drawSide(cur) {
   const sb = $('#sidebar'); sb.innerHTML = '';
   const brand = el('a', { class: 'brand', href: '#/' }, el('span', { class: 'brand-mark', html: ICON.chip }),
-    el('span', { class: 'brand-txt' }, el('b', { text: COURSE }), el('small', { text: 'PIC16F887 · ' + MOOC.parts.length + ' parts · ' + MOOC.allEx.length + ' exercises' })));
+    el('span', { class: 'brand-txt' }, el('b', { text: COURSE }), el('small', { text: 'PIC16F887 · ' + MOOC.parts.length + (MOOC.parts.length === 1 ? ' part · ' : ' parts · ') + MOOC.allEx.length + ' exercises' })));
   const ul = el('ul', { class: 'nav' });
   ul.append(navItem('#/', 'About this course', cur.kind === 'home'));
   ul.append(navItem('#/progress', 'My progress and saving', cur.kind === 'progress'));
@@ -192,7 +192,7 @@ function renderHome() {
       el('h1', { class: 'hero-t', text: COURSE }),
       el('p', { class: 'hero-tag', text: CFG.tagline }),
       CFG.lead ? el('p', { class: 'hero-lead', text: CFG.lead }) : null,
-      el('div', { class: 'hero-stats' }, stat(MOOC.parts.length, 'parts'), stat(MOOC.allEx.length, 'exercises'), stat(t.done, t.done === 1 ? 'point earned' : 'points earned')),
+      el('div', { class: 'hero-stats' }, stat(MOOC.parts.length, MOOC.parts.length === 1 ? 'part' : 'parts'), stat(MOOC.allEx.length, MOOC.allEx.length === 1 ? 'exercise' : 'exercises'), stat(t.done, t.done === 1 ? 'point earned' : 'points earned')),
       el('div', { class: 'hero-cta' },
         el('a', { class: 'mbtn light', href: secHref(tg.p, tg.s) }, icon('play'), t.done ? 'Continue learning' : 'Start learning'),
         el('a', { class: 'mbtn ghost', href: '#/progress' }, 'My progress and saving')),
