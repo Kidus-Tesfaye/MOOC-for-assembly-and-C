@@ -81,14 +81,14 @@ void main(void) {
         D.EX('Binary 1101,0110 to decimal', '1101,0110', 'text', [], R`$1101\,0110_{2} = 1 \times 128 + 1 \times 64 + 0 \times 32 + 1 \times 16 + 0 \times 8 + 1 \times 4 + 1 \times 2 + 0 \times 1 = 214$. Remember the weights $2^{7} = 128$, $2^{6} = 64$, $2^{5} = 32$, $2^{4} = 16$, $2^{3} = 8$, $2^{2} = 4$, $2^{1} = 2$, $2^{0} = 1$.`, { lineNumbers: false }),
         D.T(R`<p>And the other way round, decimal $214$ to binary:</p>`),
         D.TABLE(['Question', 'Answer', 'Bit', 'What is left'], [
-          [R`Does $214$ contain $128$?`, 'yes', 'b7 = 1', R`$214 - 128 = 86$`],
-          [R`Does $86$ contain $64$?`, 'yes', 'b6 = 1', R`$86 - 64 = 22$`],
-          [R`Does $22$ contain $32$?`, 'no', 'b5 = 0', R`$22$`],
-          [R`Does $22$ contain $16$?`, 'yes', 'b4 = 1', R`$22 - 16 = 6$`],
-          [R`Does $6$ contain $8$?`, 'no', 'b3 = 0', R`$6$`],
-          [R`Does $6$ contain $4$?`, 'yes', 'b2 = 1', R`$6 - 4 = 2$`],
-          [R`Does $2$ contain $2$?`, 'yes', 'b1 = 1', R`$2 - 2 = 0$`],
-          [R`Does $0$ contain $1$?`, 'no', 'b0 = 0', R`$0$`]
+          [R`Does $214$ contain $128$?`, 'yes', R`$b_{7} = 1$`, R`$214 - 128 = 86$`],
+          [R`Does $86$ contain $64$?`, 'yes', R`$b_{6} = 1$`, R`$86 - 64 = 22$`],
+          [R`Does $22$ contain $32$?`, 'no', R`$b_{5} = 0$`, R`$22$`],
+          [R`Does $22$ contain $16$?`, 'yes', R`$b_{4} = 1$`, R`$22 - 16 = 6$`],
+          [R`Does $6$ contain $8$?`, 'no', R`$b_{3} = 0$`, R`$6$`],
+          [R`Does $6$ contain $4$?`, 'yes', R`$b_{2} = 1$`, R`$6 - 4 = 2$`],
+          [R`Does $2$ contain $2$?`, 'yes', R`$b_{1} = 1$`, R`$2 - 2 = 0$`],
+          [R`Does $0$ contain $1$?`, 'no', R`$b_{0} = 0$`, R`$0$`]
         ], { small: true, cap: R`So $214 = 1101\,0110_{2}$.` }),
         D.T(R`<p>Converting decimal $120$ to hexadecimal, as in the lecture: $120$ contains $64$ (remainder $56$), $32$ (remainder $24$), $16$ (remainder $8$) and $8$ (remainder $0$), so $120 = 0111\,1000_{2}$. With the table, $0111 = 7$ and $1000 = 8$: $120 = 78_{16}$. In the other direction, $C7_{16} = 1100\,0111_{2} = 128 + 64 + 4 + 2 + 1 = 199$.</p>`),
         D.num('Binary to decimal', R`<p>Convert <code>B'11010001'</code> to decimal.</p>`, dec('11010001'), R`$128 + 64 + 16 + 1 = 209$.`, { hint: 'Add the weights of the 1 bits: 128, 64, 16 and 1.' }),
@@ -206,7 +206,7 @@ ANDLW   00001111B   ; masking the 4 lowest bits
 MOVWF   PORTD_TEMP`, { cap: 'The same masking in C (Activity 7C) and in assembly (Activity 7).' }),
         D.T(R`<p>In the same way OR <i>sets</i> bits (where the mask has a $1$ the result is $1$) and XOR <i>toggles</i> bits (where the mask has a $1$ the bit is inverted). Activity 10 toggles the pin RD0 with an XOR. You will use these three tricks constantly in Part 7.</p>`),
         D.mc('Main logic operations', 'Which three logic operations are the main ones in an 8-bit microcontroller (Lecture 2)?', ['AND, OR and XOR', 'NAND, NOR and NOT', 'ADD, SUB and MUL', 'SHIFT, ROTATE and SWAP'], 0, 'The lecture names AND, OR and XOR, applied byte with byte.', { hint: 'They are the three operations of the worked example with 10100001 and 11011100.' }),
-        D.num('AND', R`<p>Calculate <code>1010,0001</code> AND <code>1101,1100</code>. Write the $8$-bit result.</p>`, [b8(0xA1 & 0xDC)], 'The result is 1 only where both bytes have a 1: bit 7 only.', { kind: 'bin', exact: true, hint: 'Compare bit by bit. Bit 7: 1 AND 1 = 1. Bit 6: 0 AND 1 = 0.' }),
+        D.num('AND', R`<p>Calculate <code>1010,0001</code> AND <code>1101,1100</code>. Write the $8$-bit result.</p>`, [b8(0xA1 & 0xDC)], 'The result is 1 only where both bytes have a 1: bit 7 only.', { kind: 'bin', exact: true, hint: R`Compare bit by bit. Bit 7: $1 \text{ AND } 1 = 1$. Bit 6: $0 \text{ AND } 1 = 0$.` }),
         D.num('OR', R`<p>Calculate <code>1010,0001</code> OR <code>1101,1100</code>.</p>`, [b8(0xA1 | 0xDC)], 'The result is 1 wherever at least one of the bits is 1.', { kind: 'bin', exact: true, hint: 'A bit is 1 if it is 1 in either byte.' }),
         D.num('XOR', R`<p>Calculate <code>1010,0001</code> XOR <code>1101,1100</code>.</p>`, [b8(0xA1 ^ 0xDC)], 'XOR is 1 where the two bits are different.', { kind: 'bin', exact: true, hint: 'Equal bits give 0, different bits give 1.' }),
         D.num('AND with 127', R`<p>Calculate $128 \text{ AND } 127$. Give the decimal result.</p>`, 0, R`$128 = 1000\,0000_{2}$ and $127 = 0111\,1111_{2}$ have no common $1$ bit, so the result is $0$.`, { hint: 'Write both numbers in binary first.' }),
@@ -223,7 +223,7 @@ void main(void) {
 `, sample: R`AND: 80
 OR: FD
 XOR: 7D`,
-          tests: [{ name: 'a = 0xA1, b = 0xDC', out: 'AND: 80\nOR: FD\nXOR: 7D\n' }, { name: 'a = 0x0F, b = 0x3C', setGlobals: { a: 0x0F, b: 0x3C }, out: 'AND: 0C\nOR: 3F\nXOR: 33\n' }, { name: 'a = 0xFF, b = 0x00', setGlobals: { a: 0xFF, b: 0 }, out: 'AND: 00\nOR: FF\nXOR: FF\n' }],
+          tests: [{ name: R`$a = A1_{16}$, $b = DC_{16}$`, out: 'AND: 80\nOR: FD\nXOR: 7D\n' }, { name: R`$a = 0F_{16}$, $b = 3C_{16}$`, setGlobals: { a: 0x0F, b: 0x3C }, out: 'AND: 0C\nOR: 3F\nXOR: 33\n' }, { name: R`$a = FF_{16}$, $b = 00_{16}$`, setGlobals: { a: 0xFF, b: 0 }, out: 'AND: 00\nOR: FF\nXOR: FF\n' }],
           solution: R`#include <stdio.h>
 
 unsigned char a = 0xA1;
@@ -295,7 +295,7 @@ printf("%d %d %X\n", s, u, u);`),
         D.multi('Case Byte1 = Byte2', R`<p>Calculate $60 - 60$ with the two's complement. Byte2 flipped is $195$ and adding $1$ gives $196$.</p>`, [{ label: R`$60 + 196 =$`, ans: [256] }, { label: '8-bit value:', ans: [0] }, { label: 'Carry:', ans: [1] }], R`$60 + 196 = 256 = 1\,0000\,0000_{2}$: the $8$-bit value is $0$ and the carry is $1$.`, { hint: '256 needs 9 bits.' }),
         D.multi('Case Byte1 < Byte2', R`<p>Calculate $50 - 60$ with the two's complement ($60$ flipped is $195$, plus $1$ is $196$).</p>`, [{ label: R`$50 + 196 =$`, ans: [246] }, { label: 'Carry:', ans: [0] }, { label: R`Value represented ($246 - 256$):`, ans: [-10] }], R`$50 + 196 = 246$ with no carry, so the result is negative: $246 - 256 = -10$.`, { hint: 'The sum does not exceed 255.' }),
         D.mc('Carry after subtraction', R`<p>The PIC calculates $\text{Byte1} - \text{Byte2}$ with Byte1 $= 20$ and Byte2 $= 35$. What are the carry and the meaning of the $8$-bit result?</p>`, ['Carry = 1 and the result is positive', R`Carry = 0 and the result is negative: $241 - 256 = -15$`, 'Carry = 0 and the result is $0$', R`Carry = 1 and the result is $-15$`], 1, R`$20 < 35$, so the carry is $0$; the result is $20 + (256 - 35) = 241$, which represents $241 - 256 = -15$.`, { hint: R`Is $\text{Byte1} \geq \text{Byte2}$?` }),
-        D.multi('128 − H\'1F\'', R`<p>Calculate $128 - 1F_{16}$ with the two's complement. $1F_{16} = 0001\,1111_{2} = 31$.</p>`, [{ label: 'Flipped (decimal):', ans: [224] }, { label: 'After adding 1:', ans: [225] }, { label: R`8-bit result of $128 + 225$:`, ans: [97] }, { label: 'Carry:', ans: [1] }], R`$31$ flipped is $1110\,0000_{2} = 224$; $224 + 1 = 225$; $128 + 225 = 353 = 256 + 97$, so the result is $97$ with carry $1$.`, { hint: 'Flip 0001,1111 to get 1110,0000.' }),
+        D.multi('Two\'s complement of H\'1F\'', R`<p>Calculate $128 - 1F_{16}$ with the two's complement. $1F_{16} = 0001\,1111_{2} = 31$.</p>`, [{ label: 'Flipped (decimal):', ans: [224] }, { label: 'After adding 1:', ans: [225] }, { label: R`8-bit result of $128 + 225$:`, ans: [97] }, { label: 'Carry:', ans: [1] }], R`$31$ flipped is $1110\,0000_{2} = 224$; $224 + 1 = 225$; $128 + 225 = 353 = 256 + 97$, so the result is $97$ with carry $1$.`, { hint: 'Flip 0001,1111 to get 1110,0000.' }),
         D.txt('The overflow bit', R`<p>Which bit of the $8$-bit STATUS register shows that the result of an arithmetic operation does not fit in $8$ bits? Write its name.</p>`, [/^(the )?carry( bit| flag)?$/i, /^c$/i, /^c bit$/i, /^c flag$/i], 'The Carry (C) flag receives the ninth bit.', { hint: 'It is the ninth bit that appears when 255 is exceeded.', solText: 'Carry (C)', solInput: 'Carry' }),
         D.c('Two views of a byte', R`<p>The variable <code>s</code> is a <code>signed char</code>. Print its value as a signed number, then the same $8$ bits as an unsigned number and in hexadecimal, exactly in the format shown. The tests use other values.</p>`, {
           start: R`#include <stdio.h>

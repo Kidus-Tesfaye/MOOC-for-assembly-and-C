@@ -63,7 +63,7 @@ void main(void) {
 
 }
 `, sample: '78 56 34 12',
-          tests: [{ name: '0x12345678', out: '78 56 34 12\n' }, { name: '0xA1B2C3D4', setGlobals: { value: 0xA1B2C3D4 }, out: 'D4 C3 B2 A1\n' }],
+          tests: [{ name: R`$12345678_{16}$`, out: '78 56 34 12\n' }, { name: R`$A1B2C3D4_{16}$`, setGlobals: { value: 0xA1B2C3D4 }, out: 'D4 C3 B2 A1\n' }],
           reqs: [{ re: /union/, msg: 'Use a union.' }],
           solution: R`#include <stdio.h>
 
@@ -227,20 +227,20 @@ a = a + b;`, R`    MOVF    BL, W
     ADDWF   AH, F       ; high bytes`, { cap: R`A 16-bit addition: add the low bytes, add the carry to the high byte, then add the high bytes.` }),
         D.H('Rotations'),
         D.T(R`<p><code>RLF f, d</code> (rotate left through carry) shifts every bit one place to the left: bit 7 goes into C and the old C comes into bit 0. <code>RRF f, d</code> does the same to the right. With C $= 0$ first, <code>RLF</code> multiplies an unsigned byte by $2$ and <code>RRF</code> divides it by $2$; the bit that falls out is in C. For a $16$-bit number, rotate the low byte and then the high byte: the carry carries the bit across.</p>`),
-        D.trace('Rotate left', R`<p>REG1 $= 1000\,0101_{2} = 133$ and C $= 0$. Follow the program and write REG1 and C after each instruction.</p>`, { pre: 'REG1 EQU 0x20', code: 'RLF REG1, F\nRLF REG1, F\nRRF REG1, F', watch: ['REG1', 'C'], init: { REG1: 133, C: 0 } }, R`$1000\,0101_{2}$ rotated left gives $0000\,1010_{2} = 10$ with C $= 1$; again: $0001\,0101_{2} = 21$ with C $= 0$; rotated right: $0000\,1010_{2} = 10$ with C $= 1$.`, { hint: 'Bit 7 goes into C, and C comes into bit 0.', note: 'Start: REG1 = 1000,0101 and C = 0.' }),
+        D.trace('Rotate left', R`<p>REG1 $= 1000\,0101_{2} = 133$ and C $= 0$. Follow the program and write REG1 and C after each instruction.</p>`, { pre: 'REG1 EQU 0x20', code: 'RLF REG1, F\nRLF REG1, F\nRRF REG1, F', watch: ['REG1', 'C'], init: { REG1: 133, C: 0 } }, R`$1000\,0101_{2}$ rotated left gives $0000\,1010_{2} = 10$ with C $= 1$; again: $0001\,0101_{2} = 21$ with C $= 0$; rotated right: $0000\,1010_{2} = 10$ with C $= 1$.`, { hint: 'Bit 7 goes into C, and C comes into bit 0.', note: R`Start: REG1 $= 1000\,0101_{2}$ and C $= 0$.` }),
         D.asm('16-bit increment', R`<p>The 16-bit number NH:NL must be incremented by one, with the carry going into NH when NL overflows. The tests start from several values.</p>`, {
           pre: 'NH EQU 0x20\nNL EQU 0x21', start: ASTART,
-          tests: [{ name: '0x00FF + 1', init: { NH: 0, NL: 0xFF }, expect: { NH: 1, NL: 0 } }, { name: '0x1234 + 1', init: { NH: 0x12, NL: 0x34 }, expect: { NH: 0x12, NL: 0x35 } }, { name: '0x0BFF + 1', init: { NH: 0x0B, NL: 0xFF }, expect: { NH: 0x0C, NL: 0 } }],
+          tests: [{ name: R`$00FF_{16} + 1$`, init: { NH: 0, NL: 0xFF }, expect: { NH: 1, NL: 0 } }, { name: R`$1234_{16} + 1$`, init: { NH: 0x12, NL: 0x34 }, expect: { NH: 0x12, NL: 0x35 } }, { name: R`$0BFF_{16} + 1$`, init: { NH: 0x0B, NL: 0xFF }, expect: { NH: 0x0C, NL: 0 } }],
           solution: '    INCF NL, F\n    BTFSC STATUS, 2\n    INCF NH, F\n    GOTO $'
         }, 'INCF sets Z when the low byte wraps to 0; only then is the high byte incremented.', { hint: 'INCF NL, F; then test Z with BTFSC STATUS, 2 and increment NH.' }),
         D.asm('16-bit addition', R`<p>Add the 16-bit number BH:BL to AH:AL (the result stays in AH:AL). The tests check several values.</p>`, {
           pre: 'AH EQU 0x20\nAL EQU 0x21\nBH EQU 0x22\nBL EQU 0x23', start: ASTART,
-          tests: [{ name: '0x01F0 + 0x0020', init: { AH: 1, AL: 0xF0, BH: 0, BL: 0x20 }, expect: { AH: 2, AL: 0x10 } }, { name: '1000 + 2000', init: { AH: 3, AL: 0xE8, BH: 7, BL: 0xD0 }, expect: { AH: 0x0B, AL: 0xB8 } }, { name: '0x00FF + 0x00FF', init: { AH: 0, AL: 0xFF, BH: 0, BL: 0xFF }, expect: { AH: 1, AL: 0xFE } }],
+          tests: [{ name: R`$01F0_{16} + 0020_{16}$`, init: { AH: 1, AL: 0xF0, BH: 0, BL: 0x20 }, expect: { AH: 2, AL: 0x10 } }, { name: R`$1000 + 2000$`, init: { AH: 3, AL: 0xE8, BH: 7, BL: 0xD0 }, expect: { AH: 0x0B, AL: 0xB8 } }, { name: R`$00FF_{16} + 00FF_{16}$`, init: { AH: 0, AL: 0xFF, BH: 0, BL: 0xFF }, expect: { AH: 1, AL: 0xFE } }],
           solution: '    MOVF BL, W\n    ADDWF AL, F\n    BTFSC STATUS, 0\n    INCF AH, F\n    MOVF BH, W\n    ADDWF AH, F\n    GOTO $'
         }, 'Low bytes first; the carry out of the low addition is added to the high byte, then the high bytes are added.', { hint: 'Copy the 16-bit addition shown above.' }),
         D.asm('Multiply by 4', R`<p>Multiply the register X by $4$ with two left rotations (the result is at most $255$). Clear the carry before each rotation so that a $0$ comes into bit 0.</p>`, {
           pre: 'X EQU 0x20', start: ASTART,
-          tests: [{ name: 'X = 13', init: { X: 13, C: 1 }, expect: { X: 52 } }, { name: 'X = 60', init: { X: 60, C: 1 }, expect: { X: 240 } }],
+          tests: [{ name: R`$X = 13$`, init: { X: 13, C: 1 }, expect: { X: 52 } }, { name: R`$X = 60$`, init: { X: 60, C: 1 }, expect: { X: 240 } }],
           reqs: [{ re: /\bRLF\b/i, msg: 'Use RLF.' }],
           solution: '    BCF STATUS, 0\n    RLF X, F\n    BCF STATUS, 0\n    RLF X, F\n    GOTO $'
         }, R`Each left shift multiplies by $2$: $X \times 2 \times 2 = 4X$. Clearing C makes the new bit 0 a zero.`, { hint: 'BCF STATUS, 0 then RLF X, F, twice.' })

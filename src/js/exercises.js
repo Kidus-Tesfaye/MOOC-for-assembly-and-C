@@ -554,7 +554,7 @@ T.code = function (ex, ctx) {
     ed.setError(r.errors && r.errors[0] ? r.errors[0].line : 0);
     const box = el('div', { class: 'res-box' });
     if (!isAsm) {
-      const usesTerm = r.segments.length || !(r.m.lcd && r.m.lcd.used);
+      const usesTerm = r.segments.length || r.m.txLog.length || (r.prog && r.prog.includes.has('stdio'));
       if (usesTerm) box.append(terminalView(r.segments, r.m.txLog.length && !r.out ? 'Serial terminal' : 'Output'));
       if (r.errors.length) box.append(el('div', { class: 'res-err', text: 'Error on line ' + r.errors[0].line + ': ' + r.errors[0].msg }));
       const st = r.halted === 'end' ? (tests()[0].call ? '' : 'The program finished.') : HALT[r.halted] || '';

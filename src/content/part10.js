@@ -25,7 +25,7 @@ D.part({
   sections: [
     {
       title: 'Polling or interrupts?',
-      objectives: ['You will know what an interrupt is and how the PIC answers it', 'You will know the roles of GIE, the enable bits and the flags', 'You will know why every interrupt starts at address 0x04'],
+      objectives: ['You will know what an interrupt is and how the PIC answers it', 'You will know the roles of GIE, the enable bits and the flags', 'You will know why every interrupt starts at address <code>0x04</code>'],
       blocks: [
         D.T(R`<p>Imagine you are reading a book and the phone rings. You stop reading, remember where you were, answer the call, and then continue reading from the same place. You do not check the phone every second, but you are prepared for a call at any time. The PIC handles an <b>interrupt</b> in the same way:</p>
 <ol>
@@ -43,7 +43,7 @@ D.part({
           ['<b>TMR1IE</b>, <b>RCIE</b>, <b>ADIE</b>...', 'PIE1', 'enable the peripheral sources'],
           ['<b>TMR1IF</b>, <b>RCIF</b>, <b>ADIF</b>...', 'PIR1', 'the peripheral flags (aligned with the enable bits of PIE1)']
         ]),
-        D.T(R`<p>An interrupt happens when a <b>flag</b> is $1$, its <b>enable bit</b> is $1$, and GIE is $1$ (and PEIE for a peripheral source). The processor then clears GIE automatically, so that no new interrupt can break into the ISR, pushes the program counter and jumps to address <b>0x04</b>, the <b>interrupt vector</b>. The ISR ends with <code>RETFIE</code>, which is a <code>RETURN</code> that also sets GIE again.</p>`),
+        D.T(R`<p>An interrupt happens when a <b>flag</b> is $1$, its <b>enable bit</b> is $1$, and GIE is $1$ (and PEIE for a peripheral source). The processor then clears GIE automatically, so that no new interrupt can break into the ISR, pushes the program counter and jumps to address <code>0x04</code>, the <b>interrupt vector</b>. The ISR ends with <code>RETFIE</code>, which is a <code>RETURN</code> that also sets GIE again.</p>`),
         D.KEY('Clear the flag', R`<p>The hardware sets a flag, but only the program clears it. The first thing an ISR does is clear the flag of the event it answers; otherwise, after <code>RETFIE</code>, the flag is still $1$ and the interrupt happens again immediately, forever.</p>`),
         D.T(R`<p>All $17$ sources share the same vector $0x04$: one of the weaknesses of the PIC16. When several interrupts are enabled, the ISR must test the flags to find out which event happened (for example the fire sensor or the water-leak sensor of the lecture example).</p>`),
         D.mc('RETFIE or RETURN', 'What is the difference between RETFIE and RETURN?', ['RETFIE also sets GIE again, re-enabling the interrupts', 'RETFIE returns two levels', 'RETURN sets GIE', 'There is no difference'], 0, 'GIE was cleared automatically when the interrupt started; RETFIE restores it.', { hint: 'RETurn From IntErrupt.' }),
@@ -55,7 +55,7 @@ D.part({
     },
     {
       title: 'The external interrupt on RB0',
-      objectives: ['You will be able to configure the RB0/INT interrupt', 'You will be able to write an ISR in assembly at address 0x04', 'You will be able to write an ISR in C with <code>__interrupt()</code>'],
+      objectives: ['You will be able to configure the RB0/INT interrupt', 'You will be able to write an ISR in assembly at address <code>0x04</code>', 'You will be able to write an ISR in C with <code>__interrupt()</code>'],
       blocks: [
         D.T(R`<p><b>Activity 8</b> blinks a red LED (RD1) in the main code at $1\ \mathrm{Hz}$, and a push button on <b>RB0/INT</b> switches on a green LED (RD0) through an interrupt. The button is never tested with BTFSS: the event calls the ISR by itself. Four conditions are needed:</p>
 <ol>
