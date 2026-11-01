@@ -6628,6 +6628,259 @@ LOOP:
 });
 })();
 
+/* ---- part10.js ---- */
+/* Part 10 - Interrupts (Lecture 10, Lab 4: Activities 8, 8C, 9, 9C) */
+(function () {
+const SETUP8 = '\nSETUP:\n    CLRF PORTD\n    BSF RP0\n    MOVLW 01100000B\n    MOVWF OSCCON\n    MOVLW 11111111B     ; RB0 is input\n    MOVWF TRISB\n    CLRF TRISD          ; PORTD is output\n    BSF RP1\n    CLRF ANSELH         ; RB0 is digital\n    BCF RP0\n    BCF RP1\n    RETURN\n';
+const VEC = '#define LED_GREEN RD0\n#define LED_RED RD1\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n';
+const C8_SETUP = R`#include <xc.h>
+#define _XTAL_FREQ 4000000
+#define led_green RD0
+#define led_red   RD1
+
+void setup() {
+    PORTD = 0;
+    PORTB = 0;
+    OSCCON = 0b01100000;
+    TRISB = 0b11111111;     // RB0 is an input
+    TRISD = 0b00000000;     // PORTD is output
+    ANSELH = 0;             // PORTB digital
+}
+`;
+/* rising edges on RB0 at given cycle times (the pin goes back to 0 in between) */
+const presses = (times, width) => times.reduce((a, t) => a.concat([{ at: t, pins: { B: 1 } }, { at: t + (width || 2000), pins: { B: 0 } }]), []);
+const pressSteps = (steps) => steps.reduce((a, s) => a.concat([{ step: s, pins: { B: 1 } }, { step: s + 3, pins: { B: 0 } }]), []);
+D.part({
+  title: 'Interrupts',
+  intro: R`<p>So far the programs <i>polled</i>: they kept testing a pin or a flag in a loop. An <b>interrupt</b> lets the hardware call a function by itself when an event happens, while the main code continues with its own work. In this part you learn how the PIC handles interrupts, write the RB0 interrupt of Activities 8 and 8C, and meet the dangers of interrupts: shared variables and saving the context.</p>`,
+  sections: [
+    {
+      title: 'Polling or interrupts?',
+      objectives: ['You will know what an interrupt is and how the PIC answers it', 'You will know the roles of GIE, the enable bits and the flags', 'You will know why every interrupt starts at address 0x04'],
+      blocks: [
+        D.T(R`<p>Imagine you are reading a book and the phone rings. You stop reading, remember where you were, answer the call, and then continue reading from the same place. You do not check the phone every second, but you are prepared for a call at any time. The PIC handles an <b>interrupt</b> in the same way:</p>
+<ol>
+<li>it stops the main code (after finishing the current instruction),</li>
+<li>it saves the address of the next instruction on the stack,</li>
+<li>it executes the <b>interrupt service routine</b> (ISR),</li>
+<li>it returns to the main code where it was interrupted.</li>
+</ol>
+<p>The PIC16F887 has $17$ interrupt sources. Three are the main ones, controlled in the register <b>INTCON</b>: the external interrupt on the pin RB0/INT, the change of the pins of PORTB, and the overflow of Timer0. The others (Timer1, Timer2, the A/D converter, the USART receiver and transmitter, the CCP modules, the comparators, the EEPROM...) are the <b>peripheral</b> interrupts, controlled in PIE1/PIE2 and PIR1/PIR2.</p>`),
+        D.TABLE(['Bit', 'Register', 'Role'], [
+          ['<b>GIE</b>', 'INTCON bit 7', 'Global Interrupt Enable: if $0$, no interrupt happens at all'],
+          ['<b>PEIE</b>', 'INTCON bit 6', 'Peripheral Interrupt Enable: allows the peripheral sources'],
+          ['<b>INTE</b>, <b>T0IE</b>, <b>RBIE</b>', 'INTCON bits 4, 5, 3', 'enable the three main sources'],
+          ['<b>INTF</b>, <b>T0IF</b>, <b>RBIF</b>', 'INTCON bits 1, 2, 0', 'the <b>flags</b>: set by the hardware when the event happens'],
+          ['<b>TMR1IE</b>, <b>RCIE</b>, <b>ADIE</b>...', 'PIE1', 'enable the peripheral sources'],
+          ['<b>TMR1IF</b>, <b>RCIF</b>, <b>ADIF</b>...', 'PIR1', 'the peripheral flags (aligned with the enable bits of PIE1)']
+        ]),
+        D.T(R`<p>An interrupt happens when a <b>flag</b> is $1$, its <b>enable bit</b> is $1$, and GIE is $1$ (and PEIE for a peripheral source). The processor then clears GIE automatically, so that no new interrupt can break into the ISR, pushes the program counter and jumps to address <b>0x04</b>, the <b>interrupt vector</b>. The ISR ends with <code>RETFIE</code>, which is a <code>RETURN</code> that also sets GIE again.</p>`),
+        D.KEY('Clear the flag', R`<p>The hardware sets a flag, but only the program clears it. The first thing an ISR does is clear the flag of the event it answers; otherwise, after <code>RETFIE</code>, the flag is still $1$ and the interrupt happens again immediately, forever.</p>`),
+        D.T(R`<p>All $17$ sources share the same vector $0x04$: one of the weaknesses of the PIC16. When several interrupts are enabled, the ISR must test the flags to find out which event happened (for example the fire sensor or the water-leak sensor of the lecture example).</p>`),
+        D.mc('RETFIE or RETURN', 'What is the difference between RETFIE and RETURN?', ['RETFIE also sets GIE again, re-enabling the interrupts', 'RETFIE returns two levels', 'RETURN sets GIE', 'There is no difference'], 0, 'GIE was cleared automatically when the interrupt started; RETFIE restores it.', { hint: 'RETurn From IntErrupt.' }),
+        D.tf('The fifth address', 'The interrupt vector is the fifth location of the program memory, counting from address 0.', true, 'Addresses 0, 1, 2, 3 and 4: address 4 is the fifth location.', { hint: 'Count 0, 1, 2, 3, 4.' }),
+        D.tf('GIE in the ISR', 'When the ISR starts, the GIE bit is cleared automatically.', true, 'This prevents a new interrupt inside the ISR (no interrupt on interrupt).', { hint: 'Can an interrupt interrupt the ISR?' }),
+        D.mc('First thing in the ISR', 'What should be cleared manually at the beginning of the ISR?', ['The flag of the interrupt that happened', 'GIE', 'The stack', 'The W register'], 0, 'If the flag stays set, the interrupt repeats endlessly after RETFIE.', { hint: 'The hardware sets it, the program must clear it.' }),
+        D.mc('Three conditions', 'Which three bits must be 1 for the RB0/INT interrupt to happen?', ['INTF, INTE and GIE', 'INTF, PEIE and RBIE', 'T0IF, T0IE and GIE', 'GIE, PEIE and RCIE'], 0, 'The flag INTF, its enable bit INTE and the global enable GIE.', { hint: 'Flag + enable + global enable.' })
+      ]
+    },
+    {
+      title: 'The external interrupt on RB0',
+      objectives: ['You will be able to configure the RB0/INT interrupt', 'You will be able to write an ISR in assembly at address 0x04', 'You will be able to write an ISR in C with <code>__interrupt()</code>'],
+      blocks: [
+        D.T(R`<p><b>Activity 8</b> blinks a red LED (RD1) in the main code at $1\ \mathrm{Hz}$, and a push button on <b>RB0/INT</b> switches on a green LED (RD0) through an interrupt. The button is never tested with BTFSS: the event calls the ISR by itself. Four conditions are needed:</p>
+<ol>
+<li>RB0 must be a <b>digital input</b>: TRISB0 $= 1$ and ANSELH cleared (RB0 is the analog channel AN12),</li>
+<li>the source must be enabled: <b>INTE</b> $= 1$,</li>
+<li>the interrupts must be enabled: <b>GIE</b> $= 1$,</li>
+<li>an edge on the pin: a rising edge by default (the bit INTEDG of OPTION_REG chooses the edge).</li>
+</ol>`),
+        D.SIDE(R`void __interrupt() my_isr_routine() {
+    INTF = 0;            // clear the flag
+    led_green = 1;       // led on
+}
+
+void main(void) {
+    setup();
+    GIE = 1;
+    INTE = 1;
+    while (1) {
+        led_red = 1;
+        __delay_ms(500);
+        led_red = 0;
+        __delay_ms(500);
+    }
+}`, R`    ORG     0         ; reset vector
+    GOTO    MAIN
+    ORG     0X4       ; interrupt vector
+    BCF     INTF      ; clear the flag first
+    BSF     LED_GREEN ; turn on green led
+    RETFIE
+
+MAIN:
+    CALL    SETUP
+    BSF     GIE       ; required condition
+    BSF     INTE      ; required condition
+REPEAT:               ; blink red led
+    BSF     LED_RED
+    CALL    DELAY_500MS
+    BCF     LED_RED
+    CALL    DELAY_500MS
+    GOTO    REPEAT`, { cap: R`Activity 8C and Activity 8. In C the special function <code>__interrupt()</code> replaces the <code>ORG 0X4</code>; its name (here <code>my_isr_routine</code>) can be chosen freely. The lecture compares the two hex files: the C compiler adds hidden instructions to the ISR, to save the context (see the next section).` }),
+        D.asm('Activity 8', R`<p>Complete Activity 8: write the ISR at address <code>0x04</code> (clear the flag and switch on the green LED on RD0), and enable the RB0 interrupt in the main code. The SETUP subroutine is given after your code. The simulator presses the button on RB0.</p>`, {
+          pre: 'GREEN_DONE EQU 0x20\n' + VEC, post: SETUP8,
+          start: '    ; the ISR: clear the flag, switch on the green LED\n\n    RETFIE\n\nMAIN:\n    CALL SETUP\n    ; enable the interrupt on RB0\n\nREPEAT:\n    GOTO REPEAT\n',
+          tests: [
+            { name: 'Button pressed', events: pressSteps([200]), maxSteps: 600, limitOk: true, expect: { RD0: 1, INTF: 0, GIE: 1, INTE: 1 } },
+            { name: 'No button', maxSteps: 600, limitOk: true, expect: { RD0: 0, GIE: 1, INTE: 1 } }],
+          solution: '    BCF INTF\n    BSF LED_GREEN\n    RETFIE\n\nMAIN:\n    CALL SETUP\n    BSF GIE\n    BSF INTE\nREPEAT:\n    GOTO REPEAT\n'
+        }, 'The ISR clears INTF and sets RD0; the main code sets GIE and INTE after SETUP.', { hint: [R`The ISR: <code>BCF INTF</code>, <code>BSF LED_GREEN</code>, <code>RETFIE</code>.`, R`In MAIN after <code>CALL SETUP</code>: <code>BSF GIE</code> and <code>BSF INTE</code>.`] }),
+        D.c('Activity 8C', R`<p>Complete Activity 8C in C: write the interrupt function (clear INTF and switch on <code>led_green</code>) and enable the interrupt in <code>main</code>. The main loop blinks the red LED. The simulator presses the button at $0.7\ \mathrm{s}$.</p>`, {
+          start: C8_SETUP + R`
+// write the interrupt function here
+
+
+void main(void) {
+    setup();
+    // enable the RB0 interrupt
+
+    while (1) {
+        led_red = 1;
+        __delay_ms(500);
+        led_red = 0;
+        __delay_ms(500);
+    }
+}
+`, tests: [
+            { name: 'Button pressed at 0.7 s', maxCycles: 1500000, events: presses([700000]), expect: { RD0: 1, INTF: 0, GIE: 1, 'PERIOD.D1': [990000, 1010000] } },
+            { name: 'No button', maxCycles: 1500000, expect: { RD0: 0 } }],
+          reqs: [{ re: /__interrupt\s*\(\s*\)/, msg: 'Write the function with void __interrupt() name(void).' }],
+          solution: C8_SETUP + R`
+void __interrupt() my_isr_routine() {
+    INTF = 0;
+    led_green = 1;
+}
+
+void main(void) {
+    setup();
+    GIE = 1;
+    INTE = 1;
+    while (1) {
+        led_red = 1;
+        __delay_ms(500);
+        led_red = 0;
+        __delay_ms(500);
+    }
+}
+`
+        }, '', { hint: [R`<code>void __interrupt() my_isr_routine() { INTF = 0; led_green = 1; }</code>`, R`In <code>main</code>, after <code>setup();</code>: <code>GIE = 1; INTE = 1;</code>`] }),
+        D.c('Count the presses', R`<p>Change the program so that the interrupt counts the presses of the button on RB0 in the global variable <code>presses</code> and shows the count on PORTD (in binary, on the LEDs). The main code does nothing but wait. Declare the variable <code>volatile</code>, because it is changed by the interrupt (see the next section).</p>`, {
+          start: C8_SETUP + R`
+volatile unsigned char presses = 0;
+
+void main(void) {
+    setup();
+    GIE = 1;
+    INTE = 1;
+    while (1) {
+    }
+}
+`, tests: [
+            { name: 'Three presses', maxCycles: 100000, events: presses([10000, 30000, 50000]), globals: { presses: 3 }, expect: { 'OUT.D': 3 } },
+            { name: 'Five presses', maxCycles: 100000, events: presses([5000, 15000, 25000, 35000, 45000]), globals: { presses: 5 }, expect: { 'OUT.D': 5 } }],
+          solution: C8_SETUP + R`
+volatile unsigned char presses = 0;
+
+void __interrupt() isr(void) {
+    INTF = 0;
+    presses++;
+    PORTD = presses;
+}
+
+void main(void) {
+    setup();
+    GIE = 1;
+    INTE = 1;
+    while (1) {
+    }
+}
+`
+        }, '', { hint: R`The ISR: clear INTF, <code>presses++;</code> and <code>PORTD = presses;</code>.` }),
+        D.c('Falling edge', R`<p>An active-low button (pressed $= 0$) is connected to RB0, with a pull-up resistor. The interrupt must happen when the button is <b>pressed</b>, that is on the <b>falling</b> edge. Clear the bit <b>INTEDG</b> of OPTION_REG in <code>main</code> before enabling the interrupt. The ISR toggles the LED on RD0.</p>`, {
+          start: C8_SETUP + R`
+void __interrupt() isr(void) {
+    INTF = 0;
+    RD0 = !RD0;
+}
+
+void main(void) {
+    setup();
+    // choose the falling edge, then enable the interrupt
+
+    while (1) {
+    }
+}
+`, tests: [{ name: 'Press (1 to 0), release, press', maxCycles: 60000, init: { pins: { B: 1 } }, events: [{ at: 10000, pins: { B: 0 } }, { at: 20000, pins: { B: 1 } }, { at: 30000, pins: { B: 0 } }, { at: 40000, pins: { B: 1 } }, { at: 45000, pins: { B: 0 } }], expect: { RD0: 1, INTEDG: 0 } }],
+          solution: C8_SETUP + R`
+void __interrupt() isr(void) {
+    INTF = 0;
+    RD0 = !RD0;
+}
+
+void main(void) {
+    setup();
+    INTEDG = 0;
+    GIE = 1;
+    INTE = 1;
+    while (1) {
+    }
+}
+`
+        }, '', { hint: R`<code>INTEDG = 0;</code> selects the falling edge. Then <code>GIE = 1; INTE = 1;</code>. Three presses toggle the LED three times: it ends on.` })
+      ]
+    },
+    {
+      title: 'Shared variables and the context',
+      objectives: ['You will understand the problem of Activity 9: variables shared by the main code and the ISR', 'You will be able to save and restore W and STATUS in an assembly ISR', 'You will know when a C variable must be <code>volatile</code>'],
+      blocks: [
+        D.T(R`<p><b>Activity 9</b> changes Activity 8 so that the green LED stays on for $500\ \mathrm{ms}$ and then switches off: the ISR calls the same <code>DELAY_500MS</code> subroutine as the main code. The C version works, but the assembly version freezes for about $50$ seconds. Why?</p>
+<p>When the button is pressed, the main code is usually inside <code>DELAY_500MS</code>, with arbitrary values in its counters A1, A2 and A3. The ISR calls the same delay, which reloads the counters and decrements them to zero. Back in the main code, the delay continues with counters that now hold zero: the next <code>DECFSZ</code> turns $0$ into $255$, and the loop runs far longer than planned. The counters are <b>shared variables</b>, used by two pieces of code that can interrupt each other.</p>`),
+        D.KEY('The fix of the lecture', R`<p>Give the ISR its own variables: the assembly version of Activity 9 uses a second routine <code>DELAY_B_500MS</code> with its own counters B1, B2 and B3. The C compiler does this automatically: when a function is called both from main and from the ISR, XC8 creates separate variables for each.</p>`),
+        D.H('Saving the context'),
+        D.T(R`<p>The same problem exists for the <b>W register</b> and the <b>STATUS register</b>: the main code may be interrupted between <code>MOVLW 7</code> and <code>MOVWF A</code>, or between an instruction that sets Z and the <code>BTFSC ZERO</code> that tests it. If the ISR changes W or the flags, the main code continues with wrong values. A correct assembly ISR therefore saves W and STATUS at its start and restores them at its end. The datasheet method uses <code>SWAPF</code>, because unlike <code>MOVF</code> it does not change the Z flag:</p>`),
+        D.CODE(R`W_TEMP      EQU 0x70    ; in the shared area 0x70-0x7F,
+STATUS_TEMP EQU 0x71    ; reachable from every bank
+
+    ORG     0X4
+    MOVWF   W_TEMP          ; save W
+    SWAPF   STATUS, W       ; save STATUS (swapped)
+    MOVWF   STATUS_TEMP
+    BCF     STATUS, 5       ; bank 0 for the ISR
+    BCF     STATUS, 6
+    ; ... the work of the ISR ...
+    SWAPF   STATUS_TEMP, W  ; restore STATUS (and the bank)
+    MOVWF   STATUS
+    SWAPF   W_TEMP, F       ; restore W without changing the flags
+    SWAPF   W_TEMP, W
+    RETFIE`, 'asm'),
+        D.T(R`<p>In C, the compiler adds this context saving to every <code>__interrupt()</code> function: these are the "hidden instructions" that the lecture finds in the hex file of Activity 8C. What C needs from you is the keyword <b><code>volatile</code></b> for every global variable that the ISR changes and the main code reads. It tells the compiler that the value can change at any moment, so it must be read from memory every time instead of being kept in a register.</p>`),
+        D.mc('The 50 seconds of Activity 9', 'Why does the assembly version of Activity 9 freeze for a long time?', ['The ISR and the main code use the same delay counters, so the main delay continues with destroyed counter values', 'The stack overflows', 'GIE is never set again', 'The button bounces'], 0, 'The shared variables A1, A2 and A3 are reloaded and emptied by the ISR while the main delay is using them.', { hint: 'Which variables do the main code and the ISR both use?' }),
+        D.mc('SWAPF', 'Why does the context saving use SWAPF to copy STATUS and W?', ['SWAPF does not change any flag, while MOVF changes Z', 'SWAPF is faster', 'SWAPF selects bank 0', 'SWAPF clears the flags'], 0, 'MOVF sets Z according to the value moved, which would destroy the saved flags.', { hint: 'Which flags does MOVF change?' }),
+        D.asm('Save the context', R`<p>The main code (given after your ISR) loads $7$ into W and checks it, and checks the Z flag, in an endless loop; it counts in ERRORS every time W or the flags were damaged. The ISR must count the button presses in PRESSES and show the count on PORTD, which uses W and changes Z. Complete the ISR so that it saves and restores <b>W and STATUS</b>. The simulator presses the button many times at different moments: at the end ERRORS must be $0$.</p>`, {
+          pre: 'ZEROREG EQU 0x21\nERRORS EQU 0x22\nPRESSES EQU 0x23\nW_TEMP EQU 0x70\nSTATUS_TEMP EQU 0x71\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n',
+          post: 'MAIN:\n    CALL SETUP\n    CLRF ZEROREG\n    CLRF ERRORS\n    CLRF PRESSES\n    BSF GIE\n    BSF INTE\nLOOP:\n    MOVLW 7\n    XORLW 7          ; W must still be 7: Z = 1\n    BTFSS STATUS, 2\n    INCF ERRORS, F   ; W or Z was damaged\n    MOVF ZEROREG, W  ; sets Z = 1\n    BTFSS STATUS, 2  ; Z must still be 1\n    INCF ERRORS, F\n    GOTO LOOP\n' + SETUP8,
+          start: '    ; save W and STATUS\n\n    BCF INTF\n    INCF PRESSES, F\n    MOVF PRESSES, W\n    MOVWF PORTD\n    ; restore STATUS and W\n\n    RETFIE\n',
+          tests: [{ name: 'Twelve presses', events: pressSteps([200, 214, 229, 245, 262, 280, 299, 319, 340, 362, 385, 409]), maxSteps: 1200, limitOk: true, expect: { ERRORS: 0, PRESSES: 12, 'OUT.D': 12 } },
+            { name: 'Twelve other presses', events: pressSteps([203, 218, 231, 249, 264, 283, 301, 322, 343, 367, 388, 413]), maxSteps: 1200, limitOk: true, expect: { ERRORS: 0, PRESSES: 12 } }],
+          solution: '    MOVWF W_TEMP\n    SWAPF STATUS, W\n    MOVWF STATUS_TEMP\n    BCF INTF\n    INCF PRESSES, F\n    MOVF PRESSES, W\n    MOVWF PORTD\n    SWAPF STATUS_TEMP, W\n    MOVWF STATUS\n    SWAPF W_TEMP, F\n    SWAPF W_TEMP, W\n    RETFIE\n'
+        }, 'Without the saving, an interrupt just after MOVLW 7 leaves the ISR\'s value in W, and an interrupt just before a BTFSS changes the Z flag that it tests.', { hint: [R`At the start: <code>MOVWF W_TEMP</code>, <code>SWAPF STATUS, W</code>, <code>MOVWF STATUS_TEMP</code>.`, R`Before <code>RETFIE</code>: <code>SWAPF STATUS_TEMP, W</code>, <code>MOVWF STATUS</code>, <code>SWAPF W_TEMP, F</code>, <code>SWAPF W_TEMP, W</code>.`] }),
+        D.mc('volatile', 'Which variable must be declared volatile?', ['A global counter incremented in the ISR and read in the main loop', 'A local variable of the ISR', 'A constant', 'A function parameter'], 0, 'The main code must re-read it from memory every time, because the ISR can change it at any moment.', { hint: 'Who else can change the variable while main is running?' })
+      ]
+    }
+  ]
+});
+})();
+
 /* Application shell: sidebar, pages, router, progress saving UI and the self-test. Layout and styles follow
    the course pages of mooc.fi (Python Programming MOOC 2026). */
 (function (root) {
