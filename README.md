@@ -1,8 +1,7 @@
 # Assembly and C Programming MOOC (PIC16F887)
 
 An offline, interactive course for learning to program in **C** and in **assembly language** from zero.
-It follows the lecture slides *Microcontroller Systems ELE3614* (Nabil Karami, PhD) and their lab
-activities, reorganised around programming. The look and feel copies the mooc.fi course pages
+The look and feel copies the mooc.fi course pages
 (Python Programming MOOC 2026).
 
 ## Using the course
