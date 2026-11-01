@@ -1,10 +1,12 @@
-/* Application shell: sidebar, pages, router, progress saving UI and the self-test. Layout and styles follow
-   the course pages of mooc.fi (Python Programming MOOC 2026). */
+/* Application shell: sidebar, pages, router, progress saving UI and the self-test. The course settings
+   (title, groups, storage key, texts) come from MOOC.config, which build.py writes for each course. */
 (function (root) {
 'use strict';
 const { el, esc, $, $$, slug, icon, ICON, codeBlock, renderMath, Store, buildExercise, sampleOut, saveToFile, pickFile } = MOOC;
-const COURSE = 'Assembly and C Programming MOOC';
-const GROUPS = { 1: 'Introduction to Programming', 2: 'Advanced Course in Programming' };
+const CFG = MOOC.config;
+const COURSE = CFG.title;
+const GROUPS = CFG.groups;
+const plain = s => String(s).replace(/<[^>]+>/g, '');
 
 /* ---------- indexing ---------- */
 function indexCourse() {
@@ -70,24 +72,37 @@ async function doLoad() {
 }
 
 /* ---------- chrome ---------- */
+function crumbs() {
+  const c = root.__cur || {};
+  const sep = () => el('span', { class: 'cr-sep', 'aria-hidden': 'true', text: '/' });
+  const items = [el('a', { href: '#/', text: CFG.short || 'Home' })];
+  if (c.p) items.push(sep(), c.s ? el('a', { href: '#/' + c.p.slug, text: 'Part ' + c.p.num }) : el('b', { text: 'Part ' + c.p.num }));
+  if (c.s) items.push(sep(), el('b', { text: c.s.num + '. ' + c.s.title }));
+  const named = { progress: 'My progress and saving', exercises: 'All exercises' }[c.kind] || (c.kind === 'page' && c.page ? c.page.title : '');
+  if (named) items.push(sep(), el('b', { text: named }));
+  return el('nav', { class: 'crumbs', 'aria-label': 'You are here' }, items);
+}
 function drawTop() {
   const top = $('#topbar'); if (!top) return;
   top.innerHTML = '';
   const s = Store.load();
   const unsaved = s.changesSinceFile || 0;
   top.append(
-    el('button', { class: 'mbtn outlined menu-btn', type: 'button', onclick: () => document.body.classList.add('menu-open') }, icon('menu'), 'Open menu'),
+    el('button', { class: 'mbtn menu-btn', type: 'button', onclick: () => document.body.classList.add('menu-open') }, icon('menu'), 'Menu'),
+    crumbs(),
     el('div', { class: 'top-actions' },
-      el('button', { class: 'mbtn outlined', type: 'button', onclick: doSave, title: 'Save your progress to a file on this computer' }, icon('save'), 'Save progress', unsaved ? el('span', { class: 'badge-dot', title: unsaved + ' change(s) not yet saved to a file', text: unsaved > 99 ? '99+' : String(unsaved) }) : null),
-      el('button', { class: 'mbtn outlined', type: 'button', onclick: doLoad, title: 'Load progress from a file you saved before' }, icon('load'), 'Load progress')));
+      el('button', { class: 'mbtn', type: 'button', onclick: doSave, title: 'Save your progress to a file on this computer' }, icon('save'), el('span', { class: 'lbl' }, 'Save', el('span', { class: 'lbl-x', text: ' progress' })), unsaved ? el('span', { class: 'badge-dot', title: unsaved + ' change(s) not yet saved to a file', text: unsaved > 99 ? '99+' : String(unsaved) }) : null),
+      el('button', { class: 'mbtn', type: 'button', onclick: doLoad, title: 'Load progress from a file you saved before' }, icon('load'), el('span', { class: 'lbl' }, 'Load', el('span', { class: 'lbl-x', text: ' progress' })))));
   const blob = $('#points-blob');
-  if (blob) { const t = stats(MOOC.allEx); blob.innerHTML = ''; blob.append(el('span', { class: 'pb-v', text: t.done }), el('span', { class: 'pb-l', text: 'points' })); blob.title = t.done + ' of ' + t.total + ' exercises completed (' + t.pct + '%). Click for your progress.'; }
+  if (blob) { const t = stats(MOOC.allEx); blob.innerHTML = ''; blob.append(el('span', { class: 'pb-ico', html: ICON.star }), el('span', { class: 'pb-v', text: t.done }), el('span', { class: 'pb-l', text: t.done === 1 ? 'point' : 'points' })); blob.title = t.done + ' of ' + t.total + ' exercises completed (' + t.pct + '%). Click for your progress.'; }
 }
 function navItem(href, label, active, extra) {
   return el('li', { class: 'nav-li' }, el('a', { class: 'nav-a' + (active ? ' active' : '') + (extra || ''), href }, el('div', { class: 'nav-label' }, label)));
 }
 function drawSide(cur) {
   const sb = $('#sidebar'); sb.innerHTML = '';
+  const brand = el('a', { class: 'brand', href: '#/' }, el('span', { class: 'brand-mark', html: ICON.chip }),
+    el('span', { class: 'brand-txt' }, el('b', { text: COURSE }), el('small', { text: 'PIC16F887 · ' + MOOC.parts.length + (MOOC.parts.length === 1 ? ' part · ' : ' parts · ') + MOOC.allEx.length + ' exercises' })));
   const ul = el('ul', { class: 'nav' });
   ul.append(navItem('#/', 'About this course', cur.kind === 'home'));
   ul.append(navItem('#/progress', 'My progress and saving', cur.kind === 'progress'));
@@ -95,20 +110,21 @@ function drawSide(cur) {
   MOOC.pages.filter(pg => pg.nav).forEach(pg => ul.append(navItem('#/' + pg.slug, pg.title, cur.kind === 'page' && cur.page === pg)));
   let lastG = 0;
   MOOC.parts.forEach(p => {
-    if (p.group !== lastG) { lastG = p.group; ul.append(el('li', { class: 'nav-group' }, el('hr'), el('div', { class: 'nav-g' }, el('b', { text: GROUPS[p.group] })))); }
+    if (p.group !== lastG) { lastG = p.group; ul.append(el('li', { class: 'nav-group' }, el('div', { class: 'nav-g', text: GROUPS[p.group] }))); }
     const active = cur.p === p;
     const st = stats(partExs(p));
-    const li = navItem('#/' + p.slug, el('span', {}, 'Part ' + p.num, st.total && st.done === st.total ? el('span', { class: 'nav-done', html: ICON.check, title: 'All exercises done' }) : null), active && !cur.s);
-    if (active) li.querySelector('a').classList.add('active');
-    ul.append(li);
+    const done = st.total && st.done === st.total;
+    ul.append(el('li', { class: 'nav-li' }, el('a', { class: 'nav-a nav-part' + (active ? ' active' : '') + (done ? ' done' : ''), href: '#/' + p.slug, title: done ? 'All exercises done' : null },
+      el('span', { class: 'nav-num', html: done ? ICON.check : String(p.num) }),
+      el('span', { class: 'nav-txt' }, el('b', { text: 'Part ' + p.num }), el('small', { html: p.title })),
+      st.total ? el('span', { class: 'nav-cnt', text: st.done + '/' + st.total }) : null)));
     if (active) {
       const sub = el('ul', { class: 'nav-sub' });
       p.sections.forEach(s => sub.append(el('li', {}, el('a', { class: 'nav-sa' + (cur.s === s ? ' active' : ''), href: secHref(p, s) }, s.num + '. ' + s.title))));
       ul.append(sub);
     }
   });
-  sb.append(el('div', { class: 'brand' }, el('a', { href: '#/', text: COURSE })), ul);
-  sb.append(el('button', { class: 'mbtn outlined close-menu', type: 'button', onclick: () => document.body.classList.remove('menu-open') }, 'Close menu'));
+  sb.append(brand, ul, el('button', { class: 'mbtn close-menu', type: 'button', onclick: () => document.body.classList.remove('menu-open') }, 'Close menu'));
 }
 
 /* ---------- blocks ---------- */
@@ -147,14 +163,15 @@ function renderBlock(b, hooks) {
 
 /* ---------- footers ---------- */
 function partNavPaper(p, curS) {
-  return el('div', { class: 'pits paper' }, el('div', { class: 'pits-t', text: 'In this part:' }),
-    el('ol', { class: 'pits-l' }, p.sections.map(s => el('li', { class: curS === s ? 'cur' : '' }, el('a', { href: secHref(p, s), text: s.num + '. ' + s.title })))));
+  return el('div', { class: 'pits paper' }, el('div', { class: 'pits-t' }, el('span', { class: 'eyebrow', text: 'Part ' + p.num }), el('b', { html: p.title })),
+    el('ol', { class: 'pits-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', { class: curS === s ? 'cur' : '' }, el('a', { href: secHref(p, s) }, el('span', { class: 'pis-n', text: s.num }), el('span', { class: 'pis-x', text: s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + '/' + st.total }) : null)); })));
 }
 function siteFooter() {
   return el('footer', { class: 'site-footer' }, el('div', { class: 'sf-card' },
-    el('p', { html: 'This course was made for learning <b>C</b> and <b>assembly</b> programming on the <b>PIC16F887</b>. It follows the lecture slides <i>Microcontroller Systems ELE3614</i> by Nabil Karami, PhD, and the lab activities that come with them.' }),
-    el('div', { class: 'sf-btns' }, el('button', { class: 'mbtn outlined', type: 'button', onclick: doSave }, 'Save progress'), el('button', { class: 'mbtn outlined', type: 'button', onclick: doLoad }, 'Load progress')),
-    el('p', { class: 'sf-small', html: 'Everything runs in your browser: the C interpreter and the PIC16F887 simulator are part of this single file, and your progress is stored on your own computer. <a href="#/about-the-material">About the material and its tools.</a>' })));
+    el('div', { class: 'sf-brand' }, el('span', { class: 'brand-mark', html: ICON.chip }), el('b', { text: COURSE })),
+    el('p', { html: CFG.footer }),
+    el('div', { class: 'sf-btns' }, el('button', { class: 'mbtn', type: 'button', onclick: doSave }, icon('save'), 'Save progress'), el('button', { class: 'mbtn', type: 'button', onclick: doLoad }, icon('load'), 'Load progress')),
+    el('p', { class: 'sf-small', html: 'Everything runs in your browser: ' + CFG.engine + ', and your progress is stored on your own computer. <a href="#/about-the-material">About the material and its tools.</a>' })));
 }
 function coursePageFooter(p, s) {
   return el('div', { class: 'cpf' }, el('div', { class: 'cpf-in' }, partNavPaper(p, s)));
@@ -166,12 +183,25 @@ function renderHome() {
   root.__cur = { kind: 'home' };
   const home = MOOC.pages.find(pg => pg.slug === 'home');
   const page = el('div', {});
-  page.append(el('div', { class: 'banner' }, el('div', { class: 'banner-in' }, el('h1', { class: 'banner-t' }, el('span', { text: COURSE })), el('div', { class: 'banner-s' }, el('span', { text: 'Learn to program in C and assembly from zero' })))));
-  const art = el('article', { class: 'content' });
-  art.append(el('h1', { text: 'About this course' }));
   const t = stats(MOOC.allEx);
   const tg = nextTarget();
-  art.append(el('a', { class: 'continue-link', href: secHref(tg.p, tg.s) }, el('span', { class: 'ico', html: ICON.arrow }), el('span', {}, t.done ? 'Continue where you left off: ' : 'Start with ', el('b', { text: 'Part ' + tg.p.num + ', ' + tg.s.num + '. ' + tg.s.title }))));
+  const stat = (v, l) => el('div', { class: 'hero-stat' }, el('b', { text: v }), el('span', { text: l }));
+  page.append(el('section', { class: 'hero' + (CFG.heroCode ? ' with-card' : '') },
+    el('div', { class: 'hero-l' },
+      el('span', { class: 'hero-eyebrow', text: CFG.eyebrow || 'PIC16F887' }),
+      el('h1', { class: 'hero-t', text: COURSE }),
+      el('p', { class: 'hero-tag', text: CFG.tagline }),
+      CFG.lead ? el('p', { class: 'hero-lead', text: CFG.lead }) : null,
+      el('div', { class: 'hero-stats' }, stat(MOOC.parts.length, MOOC.parts.length === 1 ? 'part' : 'parts'), stat(MOOC.allEx.length, MOOC.allEx.length === 1 ? 'exercise' : 'exercises'), stat(t.done, t.done === 1 ? 'point earned' : 'points earned')),
+      el('div', { class: 'hero-cta' },
+        el('a', { class: 'mbtn light', href: secHref(tg.p, tg.s) }, icon('play'), t.done ? 'Continue learning' : 'Start learning'),
+        el('a', { class: 'mbtn ghost', href: '#/progress' }, 'My progress and saving')),
+      el('p', { class: 'hero-next' }, t.done ? 'Next: ' : 'First: ', el('a', { href: secHref(tg.p, tg.s), text: 'Part ' + tg.p.num + ', ' + tg.s.num + '. ' + tg.s.title }))),
+    CFG.heroCode ? el('div', { class: 'hero-r', 'aria-hidden': 'true' }, el('div', { class: 'hero-card' },
+      el('div', { class: 'hero-card-h' }, el('i', {}), el('i', {}), el('i', {}), el('span', { text: CFG.heroCode.title })),
+      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '' }))) : null));
+  const art = el('article', { class: 'content' });
+  art.append(el('h1', { text: 'About this course' }));
   (home ? home.blocks : []).forEach(b => art.append(renderBlock(b, { onChange })));
   art.append(el('h2', { class: 'sec-h', text: 'Course structure' }));
   let lastG = 0;
@@ -182,34 +212,42 @@ function renderHome() {
     rows.push(el('tr', {}, el('td', {}, el('a', { href: '#/' + p.slug, text: 'Part ' + p.num })), el('td', { html: p.title }), el('td', { class: 'r', text: st.done + ' / ' + st.total })));
   });
   art.append(el('div', { class: 'table-wrap' }, el('table', { class: 'mtable' }, el('thead', {}, el('tr', {}, el('th', { text: 'Part' }), el('th', { text: 'Topic' }), el('th', { class: 'r', text: 'Exercises done' }))), el('tbody', {}, rows))));
+  if (CFG.sibling) art.append(el('aside', { class: 'sibling' },
+    el('span', { class: 'brand-mark small', html: ICON.chip }),
+    el('div', {}, el('div', { class: 'eyebrow', text: 'The other course in this series' }),
+      el('h3', {}, el('a', { href: CFG.sibling.href, text: CFG.sibling.title })),
+      el('p', { text: CFG.sibling.blurb }),
+      el('p', { class: 'cap', html: 'It is the file <code>' + esc(CFG.sibling.href) + '</code>: keep it in the same folder as this one for the link to work. The two courses save their progress separately.' }))));
   page.append(art);
   return page;
 }
 function renderPart(p) {
   root.__cur = { kind: 'part', p };
   const art = el('article', { class: 'content' });
-  art.append(el('h1', { text: 'Part ' + p.num }));
-  if (p.intro) art.append(el('div', { class: 'lesson part-intro', html: '<p class="part-title"><b>' + p.title + '</b></p>' + p.intro }));
-  art.append(el('div', { class: 'paper pis' }, el('div', { class: 'pis-t', text: 'In this part:' }), el('ol', { class: 'pis-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', {}, el('a', { href: secHref(p, s) }, el('span', { text: s.num + '. ' + s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + ' / ' + st.total }) : null)); }))));
+  art.append(el('div', { class: 'eyebrow', text: 'Part ' + p.num + ' · ' + GROUPS[p.group] }));
+  art.append(el('h1', { html: p.title }));
+  if (p.intro) art.append(el('div', { class: 'lesson part-intro', html: p.intro }));
+  art.append(el('div', { class: 'paper pis' }, el('div', { class: 'pis-t', text: 'In this part' }), el('ol', { class: 'pis-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', {}, el('a', { href: secHref(p, s) }, el('span', { class: 'pis-n', text: s.num }), el('span', { class: 'pis-x', text: s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + ' / ' + st.total }) : null)); }))));
   const exs = partExs(p);
   const det = el('details', { class: 'paper acc' }, el('summary', {}, el('span', { text: 'List of exercises in this part' }), el('span', { class: 'acc-ico', html: ICON.chevron })),
     el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
   art.append(det);
-  return el('div', {}, art, coursePageFooter(p, null));
+  return art;
 }
 function renderSection(p, s) {
   root.__cur = { kind: 'section', p, s };
   const art = el('article', { class: 'content' });
-  art.append(el('a', { class: 'uplink', href: '#/' + p.slug }, el('span', { class: 'ico', html: ICON.up }), 'Part ' + p.num));
+  art.append(el('a', { class: 'uplink', href: '#/' + p.slug }, el('span', { class: 'ico', html: ICON.up }), 'Part ' + p.num + ': ', el('span', { html: p.title })));
   art.append(el('h1', { text: s.title }));
   if (s.objectives && s.objectives.length) art.append(textBox('lo', 'Learning objectives', null, s.objectives));
   s.blocks.forEach(b => art.append(renderBlock(b, { onChange })));
   const i = MOOC.flat.findIndex(x => x.s === s);
   const next = MOOC.flat[i + 1];
-  if (next && next.p === p) art.append(el('div', { class: 'eos' }, el('p', { text: 'You have reached the end of this section! Continue to the next section:' }), el('a', { class: 'eos-link', href: secHref(next.p, next.s) }, el('span', { class: 'ico', html: ICON.arrow }), next.s.num + '. ' + next.s.title)));
-  else if (next) art.append(el('div', { class: 'eos' }, el('p', { text: 'You have reached the end of Part ' + p.num + '! Continue to the next part:' }), el('a', { class: 'eos-link', href: '#/' + next.p.slug }, el('span', { class: 'ico', html: ICON.arrow }), 'Part ' + next.p.num + ': ' + next.p.title)));
-  else art.append(el('div', { class: 'eos' }, el('p', { text: 'You have reached the end of the course. Congratulations! Check your points and save your progress:' }), el('a', { class: 'eos-link', href: '#/progress' }, el('span', { class: 'ico', html: ICON.arrow }), 'My progress and saving')));
-  art.append(el('p', { class: 'eos-points', text: 'You can check your points from the blue blob in the bottom-right corner of the page.' }));
+  const eos = (kind, href, label) => el('a', { class: 'eos-card', href }, el('span', { class: 'eos-txt' }, el('span', { class: 'eyebrow', text: kind }), el('b', { html: label })), el('span', { class: 'ico', html: ICON.arrow }));
+  if (next && next.p === p) art.append(eos('Next section', secHref(next.p, next.s), next.s.num + '. ' + esc(next.s.title)));
+  else if (next) art.append(eos('End of Part ' + p.num + ' · next part', '#/' + next.p.slug, 'Part ' + next.p.num + ': ' + next.p.title));
+  else art.append(eos('You reached the end of the course', '#/progress', 'Check your points and save your progress'));
+  art.append(el('p', { class: 'eos-points', text: 'Your points are shown in the badge in the bottom-right corner of the page.' }));
   return el('div', {}, art, coursePageFooter(p, s));
 }
 function renderProgress() {
@@ -234,7 +272,7 @@ function renderProgress() {
       el('button', { class: 'mbtn primary', type: 'button', onclick: doSave }, icon('save'), 'Save progress to a file'),
       el('button', { class: 'mbtn outlined', type: 'button', onclick: doLoad }, icon('load'), 'Load progress from a file'),
       el('button', { class: 'mbtn danger', type: 'button', onclick: () => modal('Reset all progress?', [el('p', { text: 'This removes every completed exercise and saved answer from this browser. Files you saved are not changed. This cannot be undone.' })], [{ text: 'Cancel' }, { text: 'Reset progress', cls: 'danger-fill', onclick: () => { Store.reset(); toast('Progress reset.'); render(); } }]) }, 'Reset progress')),
-    el('p', { class: 'cap', html: 'In Chrome and Edge, “Save progress” lets you choose the file the first time and then updates the same file each time you press it. In other browsers the file is downloaded to your Downloads folder. The file name looks like <code>asm-c-mooc-progress-2026-11-01.json</code>.' })));
+    el('p', { class: 'cap', html: 'In Chrome and Edge, “Save progress” lets you choose the file the first time and then updates the same file each time you press it. In other browsers the file is downloaded to your Downloads folder. The file name looks like <code>' + esc(CFG.filePrefix) + '2026-11-01.json</code>.' })));
   art.append(el('h2', { class: 'sec-h', text: 'Points by part' }));
   art.append(el('div', { class: 'table-wrap' }, el('table', { class: 'mtable' }, el('thead', {}, el('tr', {}, el('th', { text: 'Part' }), el('th', { text: 'Topic' }), el('th', { class: 'r', text: 'Points' }), el('th', { text: 'Progress' }))),
     el('tbody', {}, MOOC.parts.map(p => { const st = stats(partExs(p)); return el('tr', {}, el('td', {}, el('a', { href: '#/' + p.slug, text: 'Part ' + p.num })), el('td', { html: p.title }), el('td', { class: 'r', text: st.done + ' / ' + st.total }), el('td', {}, el('div', { class: 'bar' }, el('i', { style: 'width:' + st.pct + '%' })))); })))));

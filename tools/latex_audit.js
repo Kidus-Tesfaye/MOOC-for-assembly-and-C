@@ -1,10 +1,16 @@
 /* Finds mathematical symbols or calculations written outside LaTeX in the course text.
-   Usage: node tools/latex_audit.js   (needs the built index.html) */
+   Usage: node tools/latex_audit.js [file.html ...]   (default: index.html and assembly.html, built first) */
 const { chromium } = require('playwright');
+const fs = require('fs');
 const path = require('path');
 (async () => {
-  const b = await chromium.launch(); const p = await b.newPage();
-  await p.goto('file://' + path.resolve(__dirname, '..', 'index.html'));
+  const root = path.resolve(__dirname, '..');
+  const files = process.argv.slice(2).length ? process.argv.slice(2) : ['index.html', 'assembly.html'].filter(f => fs.existsSync(path.join(root, f)));
+  const b = await chromium.launch();
+  let total = 0;
+  for (const f of files) {
+  const p = await b.newPage();
+  await p.goto('file://' + path.join(root, f));
   const hits = await p.evaluate(() => {
     const out = [];
     const strip = (s) => String(s)
@@ -42,7 +48,11 @@ const path = require('path');
     MOOC.parts.forEach(pt => { check('part' + pt.num + '.intro', pt.intro); pt.sections.forEach(s => { (s.objectives || []).forEach(o => check('p' + pt.num + '.' + s.num + '.obj', o)); check('p' + pt.num + '.' + s.num + '.title', s.title); walkBlocks('p' + pt.num + '.' + s.num, s.blocks); }); });
     return out;
   });
-  console.log(hits.length + ' possible issues');
-  hits.forEach(h => console.log(h));
+  console.log(f + ': ' + hits.length + ' possible issues');
+  hits.forEach(h => console.log('  ' + h));
+  total += hits.length;
+  await p.close();
+  }
   await b.close();
+  process.exitCode = total ? 1 : 0;
 })();

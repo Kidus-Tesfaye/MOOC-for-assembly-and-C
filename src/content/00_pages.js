@@ -8,8 +8,8 @@ D.page({
     D.H('How the course works'),
     D.T(R`<p>The course has 14 parts. Parts 1–7 form the <b>Introduction to Programming</b> and parts 8–14 the <b>Advanced Course in Programming</b>. Each part has a few sections: read the text, try the examples, and solve the exercises at the end of each topic.</p>
 <ul>
-<li><b>Programming exercises</b> (the red cards) ask you to write C or assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. A C program runs in a C interpreter that follows the rules of XC8; an assembly program runs in a simulator of the PIC16F887 with its ports, timers, A/D converter, serial port and an LCD.</li>
-<li><b>Quizzes</b> (the blue cards) check that you understood the ideas: multiple choice, short answers, filling in code, tracing a program step by step.</li>
+<li><b>Programming exercises</b> (the cards with a pencil) ask you to write C or assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. A C program runs in a C interpreter that follows the rules of XC8; an assembly program runs in a simulator of the PIC16F887 with its ports, timers, A/D converter, serial port and an LCD.</li>
+<li><b>Quizzes</b> (the cards with a question mark) check that you understood the ideas: multiple choice, short answers, filling in code, tracing a program step by step.</li>
 <li>Every exercise is worth <b>1 point</b>. Wrong answers cost nothing; try as many times as you need. A hint is always available, and the model solution can be opened after your first attempt.</li>
 </ul>`),
     D.H('Saving your progress'),
@@ -37,7 +37,7 @@ D.page({
 <p>The <b>C interpreter</b> follows the rules of XC8 for this chip: <code>char</code> is 8 bits and unsigned, <code>int</code> is 16 bits, <code>long</code> and <code>float</code> are 32 bits, and the registers and bits of <code>&lt;xc.h&gt;</code> (<code>PORTD</code>, <code>RD0</code>, <code>GIE</code>...) work as on the chip, together with <code>__delay_ms()</code> and <code>__interrupt()</code>. Programs that print with <code>printf</code> show their output in a terminal, as if the PIC were connected to a computer by its serial port.</p>
 <p>Both are teaching tools: they model what the course uses, but they are not complete emulators. The timing of C programs is approximate (as the lecture says, in C we cannot predict exactly how long the code takes); the timing of assembly programs is exact.</p>`),
     D.H('Fonts and licences'),
-    D.T(R`<p>The pages use the fonts Open Sans, Roboto, Roboto Slab and Roboto Mono (SIL Open Font License) and the KaTeX library for mathematics (MIT License). All of them are included in this file, so the course works without an internet connection.</p>`)
+    D.T(R`<p>The pages use the fonts Inter, Space Grotesk and JetBrains Mono (SIL Open Font License) and the KaTeX library for mathematics (MIT License). All of them are included in this file, so the course works without an internet connection.</p>`)
   ]
 });
 })();
