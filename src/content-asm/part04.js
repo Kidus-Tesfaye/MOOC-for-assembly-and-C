@@ -46,7 +46,19 @@ END_IF:`, 'asm', { cap: R`The skip jumps over exactly one instruction. When X is
           pre: 'A EQU 0x20\nB EQU 0x21\nDIFF EQU 0x22', start: ASTART,
           tests: [{ name: 'A = 90, B = 35', init: { A: 90, B: 35 }, expect: { DIFF: 55 } }, { name: 'A = 35, B = 90', init: { A: 35, B: 90 }, expect: { DIFF: 55 } }, { name: 'A = B = 12', init: { A: 12, B: 12 }, expect: { DIFF: 0 } }],
           solution: '    MOVF B, W\n    SUBWF A, W\n    BTFSC STATUS, 0\n    GOTO STORE\n    MOVF A, W\n    SUBWF B, W\nSTORE:\n    MOVWF DIFF\n    GOTO $'
-        }, R`Calculate $A - B$; if the carry shows a borrow ($A < B$), calculate $B - A$ instead.`, { hint: [R`First calculate $A - B$ into W with <code>SUBWF A, W</code>.`, R`If C $= 0$ (a borrow, A $<$ B), calculate $B - A$ with <code>MOVF A, W</code> and <code>SUBWF B, W</code> before storing.`] })
+        }, R`Calculate $A - B$; if the carry shows a borrow ($A < B$), calculate $B - A$ instead.`, { hint: [R`First calculate $A - B$ into W with <code>SUBWF A, W</code>.`, R`If C $= 0$ (a borrow, A $<$ B), calculate $B - A$ with <code>MOVF A, W</code> and <code>SUBWF B, W</code> before storing.`] }),
+        D.mc('Skip if clear', 'Which instruction skips the next instruction when bit 3 of REG1 is $0$?', ['<code>BTFSC REG1, 3</code>', '<code>BTFSS REG1, 3</code>', '<code>BCF REG1, 3</code>', '<code>DECFSZ REG1, 3</code>'], 0, 'BTFSC = bit test f, skip if clear: it skips when the bit is 0.', { hint: 'C for clear, S for set.' }),
+        D.asm('Even or odd', R`<p>Set ODD to $1$ if the number in NUM is odd and to $0$ if it is even. An odd number has bit 0 equal to $1$: test it with a skip instruction.</p>`, {
+          start: 'NUM EQU 0x20\nODD EQU 0x21\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[7, 1], [10, 0], [255, 1], [0, 0], [128, 0]].map(([v, o]) => ({ name: R`$\text{NUM} = ` + v + R`$`, init: { NUM: v, ODD: 9 }, expect: { ODD: o } })),
+          reqs: [{ re: /\bBTFS[SC]\b/i, msg: 'Test bit 0 with BTFSS or BTFSC.' }],
+          solution: 'NUM EQU 0x20\nODD EQU 0x21\n\n    CLRF  ODD\n    BTFSC NUM, 0        ; bit 0 = 0: even, skip\n    INCF  ODD, F\n    GOTO $\n'
+        }, R`Clear ODD; <code>BTFSC NUM, 0</code> skips the increment for an even number, so ODD becomes $1$ only for odd numbers.`, { hint: R`<code>CLRF ODD</code>, <code>BTFSC NUM, 0</code>, <code>INCF ODD, F</code>.` }),
+        D.asm('Negative or not', R`<p>NUM holds a <b>signed</b> byte (Part 1). Set NEG to $1$ if it is negative and to $0$ otherwise. Which bit tells the sign?</p>`, {
+          start: 'NUM EQU 0x20\nNEG EQU 0x21\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[246, 1], [10, 0], [128, 1], [127, 0], [0, 0]].map(([v, n]) => ({ name: R`$\text{NUM} = ` + v + R`$`, init: { NUM: v, NEG: 9 }, expect: { NEG: n } })),
+          solution: 'NUM EQU 0x20\nNEG EQU 0x21\n\n    CLRF  NEG\n    BTFSC NUM, 7        ; sign bit\n    INCF  NEG, F\n    GOTO $\n'
+        }, R`The sign bit is bit 7: $1$ for $128 \ldots 255$, which represent $-128 \ldots -1$.`, { hint: 'Test bit 7 in the same way as bit 0 in the previous exercise.' })
       ]
     },
     {

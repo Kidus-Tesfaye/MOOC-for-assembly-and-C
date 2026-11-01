@@ -191,6 +191,7 @@ pre.code .ln{display:inline-block;width:2em;margin-right:14px;text-align:right;c
 /* ---------- tables, figures, examples ---------- */
 .table-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow-x:auto;margin:12px 0 28px;box-shadow:var(--sh1)}
 .table-wrap+.cap{margin-top:-20px;margin-bottom:28px}
+.table-wrap>.cap{margin:0;padding:10px 16px;border-top:1px solid var(--line-2);background:#fcfcfd}
 .mtable{border-collapse:collapse;width:100%;font:14px/1.5 var(--sans)}
 .mtable th{font-weight:600;font-size:13px;text-align:left;padding:12px 16px;background:#f9fafb;border-bottom:1px solid var(--line);color:var(--muted);vertical-align:bottom}
 .mtable td{padding:12px 16px;border-bottom:1px solid var(--line-2);vertical-align:top;color:var(--text)}
