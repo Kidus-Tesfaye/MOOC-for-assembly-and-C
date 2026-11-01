@@ -175,6 +175,8 @@ pre.code .ln{display:inline-block;width:2em;margin-right:14px;text-align:right;c
 .ex-body .q p{margin:0 0 16px}
 .ex-body .q ul,.ex-body .q ol{margin:0 0 16px;padding-left:32px}
 .ex-body .sample-out{margin:8px 0 24px}
+.q table.mini{border-collapse:collapse;margin:4px 0 16px}
+.q table.mini td{border:1px solid #e0e0e0;padding:4px 14px;font:16px/1.5 var(--sans)}
 .ex-body .code-wrap{margin:8px 0 20px}
 
 /* quiz inputs */
