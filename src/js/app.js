@@ -65,8 +65,10 @@ async function doLoad() {
   try { d = Store.parseImport(f.text); } catch (e) { modal('Cannot load this file', [el('p', { text: e.message })], [{ text: 'OK', cls: 'primary' }]); return; }
   const n = Object.values(d.ex).filter(x => x.done).length;
   const cur = Object.values(Store.load().ex).filter(x => x.done).length;
+  const nn = d.notes ? Object.keys(d.notes).length : 0;
+  const plural = (k, w) => k + ' ' + w + (k === 1 ? '' : 's');
   modal('Load progress from ' + f.name + '?', [
-    el('p', { text: 'The file was saved on ' + (d.savedAt ? new Date(d.savedAt).toLocaleString() : 'an unknown date') + ' and contains ' + n + ' completed exercise' + (n === 1 ? '' : 's') + '.' }),
+    el('p', { text: 'The file was saved on ' + (d.savedAt ? new Date(d.savedAt).toLocaleString() : 'an unknown date') + ' and contains ' + plural(n, 'completed exercise') + (d.notes ? ' and ' + plural(nn, 'note') : '') + '.' + (d.notes ? '' : ' It was saved before notes existed: your notes in this browser are kept either way.') }),
     el('p', { text: 'This browser currently has ' + cur + ' completed exercise' + (cur === 1 ? '' : 's') + '. Combine keeps everything that is completed in either one; Replace uses only the file.' })
   ], [{ text: 'Cancel' }, { text: 'Replace', onclick: () => { Store.importData(d, 'replace'); toast('Progress loaded from ' + f.name + '.'); render(); } }, { text: 'Combine', cls: 'primary', onclick: () => { Store.importData(d, 'merge'); toast('Progress from ' + f.name + ' combined with this browser.'); render(); } }]);
 }
@@ -95,7 +97,7 @@ function crumbs() {
   const items = [el('a', { href: '#/', text: CFG.short || 'Home' })];
   if (c.p) items.push(sep(), c.s ? el('a', { href: '#/' + c.p.slug, text: 'Part ' + c.p.num }) : el('b', { text: 'Part ' + c.p.num }));
   if (c.s) items.push(sep(), el('b', { text: c.s.num + '. ' + c.s.title }));
-  const named = { progress: 'My progress and saving', exercises: 'All exercises' }[c.kind] || (c.kind === 'page' && c.page ? c.page.title : '');
+  const named = { progress: 'My progress and saving', exercises: 'All exercises', notes: 'All notes' }[c.kind] || (c.kind === 'page' && c.page ? c.page.title : '');
   if (named) items.push(sep(), el('b', { text: named }));
   return el('nav', { class: 'crumbs', 'aria-label': 'You are here' }, items);
 }
@@ -125,6 +127,8 @@ function drawSide(cur) {
   ul.append(navItem('#/', 'About this course', cur.kind === 'home'));
   ul.append(navItem('#/progress', 'My progress and saving', cur.kind === 'progress'));
   ul.append(navItem('#/exercises', 'All exercises', cur.kind === 'exercises'));
+  const nNotes = Object.keys(Store.notes()).length;
+  ul.append(navItem('#/notes', 'All notes' + (nNotes ? ' (' + nNotes + ')' : ''), cur.kind === 'notes'));
   MOOC.pages.filter(pg => pg.nav).forEach(pg => ul.append(navItem('#/' + pg.slug, pg.title, cur.kind === 'page' && cur.page === pg)));
   let lastG = 0;
   MOOC.parts.forEach(p => {
@@ -325,9 +329,63 @@ function nextTarget() {
   return firstOpen || MOOC.flat[0];
 }
 
+/* ---------- notes: which page is shown (notes are kept per page) ---------- */
+function notePage(c) {
+  if (c.kind === 'section') return { key: 's' + c.p.num + '.' + c.s.num, label: 'Part ' + c.p.num + ' · ' + c.s.num + '. ' + c.s.title, href: secHref(c.p, c.s) };
+  if (c.kind === 'part') return { key: 'part' + c.p.num, label: 'Part ' + c.p.num + ': ' + plain(c.p.title), href: '#/' + c.p.slug };
+  if (c.kind === 'home') return { key: 'home', label: 'About this course', href: '#/' };
+  if (c.kind === 'page' && c.page) return { key: 'page:' + c.page.slug, label: c.page.title, href: '#/' + c.page.slug };
+  return null;
+}
+function noteOrder(n) {
+  const k = n.page || '';
+  let m;
+  if (k === 'home') return 0;
+  if ((m = /^part(\d+)$/.exec(k))) return +m[1] * 1000;
+  if ((m = /^s(\d+)\.(\d+)$/.exec(k))) return +m[1] * 1000 + +m[2];
+  return 1e6;
+}
+/* where a note lives, from its page key (so the link stays right if a title changes) */
+function noteWhere(n) {
+  let m;
+  if ((m = /^s(\d+)\.(\d+)$/.exec(n.page || '')) && MOOC.parts[+m[1] - 1] && MOOC.parts[+m[1] - 1].sections[+m[2] - 1]) {
+    const p = MOOC.parts[+m[1] - 1], sec = p.sections[+m[2] - 1];
+    return { label: 'Part ' + p.num + ': ' + plain(p.title) + ' › ' + sec.num + '. ' + sec.title, href: secHref(p, sec) };
+  }
+  if ((m = /^part(\d+)$/.exec(n.page || '')) && MOOC.parts[+m[1] - 1]) { const p = MOOC.parts[+m[1] - 1]; return { label: 'Part ' + p.num + ': ' + plain(p.title), href: '#/' + p.slug }; }
+  if (n.page === 'home') return { label: 'About this course', href: '#/' };
+  if ((m = /^page:(.+)$/.exec(n.page || ''))) { const pg = MOOC.pages.find(x => x.slug === m[1]); if (pg) return { label: pg.title, href: '#/' + pg.slug }; }
+  return { label: n.label || 'Unknown page', href: n.href || '#/' };
+}
+function renderAllNotes() {
+  root.__cur = { kind: 'notes' };
+  const art = el('article', { class: 'content' });
+  art.append(el('h1', { text: 'All notes' }));
+  art.append(el('p', { class: 'lead-p', html: 'Select any text of the course and choose <b>Add note</b> to write a note about it. The text is highlighted in yellow; click it to read, change or delete the note. Every note is listed here with the place where it lives. Notes are saved with your progress, in this browser and in the progress file.' }));
+  const all = Object.values(Store.notes()).sort((a, b) => noteOrder(a) - noteOrder(b) || ((a.created || '') < (b.created || '') ? -1 : 1));
+  if (!all.length) { art.append(el('div', { class: 'paper notes-empty' }, el('span', { class: 'note-pop-ico', html: MOOC.Notes.BUBBLE }), el('span', { text: 'You have no notes yet.' }))); return art; }
+  art.append(el('p', { class: 'notes-count', text: all.length + (all.length === 1 ? ' note' : ' notes') }));
+  const list = el('ol', { class: 'notes-list' });
+  all.forEach(n => {
+    const where = noteWhere(n);
+    const quote = n.quote.length > 300 ? n.quote.slice(0, 299) + '…' : n.quote;
+    list.append(el('li', { class: 'paper note-item' },
+      el('p', { class: 'note-item-t' }, el('mark', { class: 'note-mark', text: quote }), el('span', { class: 'note-colon', text: ': ' }), el('span', { text: n.text })),
+      el('div', { class: 'note-item-f' },
+        el('span', { class: 'note-where' }, 'Location: ', el('a', { href: where.href + '?note=' + n.id, title: 'Go to this note in the course', text: where.label })),
+        el('span', { class: 'grow' }),
+        el('span', { class: 'note-date', text: n.updated ? new Date(n.updated).toLocaleDateString() : '' }),
+        el('button', { class: 'linkbtn', type: 'button', onclick: () => { if (root.confirm('Delete this note?')) { Store.deleteNote(n.id); render(); } } }, 'Delete'))));
+  });
+  art.append(list);
+  return art;
+}
+
 /* ---------- router ---------- */
 function render() {
-  const h = decodeURIComponent(location.hash || '#/');
+  const h0 = decodeURIComponent(location.hash || '#/');
+  const nq = /\?note=([\w-]+)$/.exec(h0);
+  const h = nq ? h0.slice(0, nq.index) || '#/' : h0;
   const main = $('#content'); main.innerHTML = '';
   document.body.classList.remove('menu-open');
   let m, node, title = COURSE, scrollTo = null;
@@ -341,6 +399,7 @@ function render() {
     } else { node = renderPart(p); title = 'Part ' + p.num + ' - ' + COURSE; }
   } else if (h === '#/progress') { node = renderProgress(); title = 'My progress and saving - ' + COURSE; }
   else if (h === '#/exercises') { node = renderAllExercises(); title = 'All exercises - ' + COURSE; }
+  else if (h === '#/notes') { node = renderAllNotes(); title = 'All notes - ' + COURSE; }
   else if ((m = /^#\/([\w-]+)$/.exec(h)) && MOOC.pages.find(pg => pg.slug === m[1] && pg.slug !== 'home')) { const pg = MOOC.pages.find(x => x.slug === m[1]); node = renderStaticPage(pg); title = pg.title + ' - ' + COURSE; }
   else node = renderHome();
   main.append(node);
@@ -348,6 +407,8 @@ function render() {
   renderMath(main);
   document.title = title;
   drawTop(); drawSide(root.__cur || {});
+  MOOC.Notes.attach($('article.content', main), notePage(root.__cur || {}));
+  if (nq && MOOC.Notes.show(nq[1])) return;
   if (scrollTo) { const t = document.getElementById(scrollTo); if (t) { t.scrollIntoView({ block: 'start' }); t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 1600); return; } }
   window.scrollTo(0, 0);
 }
@@ -392,7 +453,7 @@ function boot() {
   app.append(el('nav', { id: 'sidebar', 'aria-label': 'Course contents' }), el('div', { class: 'menu-backdrop', onclick: () => document.body.classList.remove('menu-open') }),
     el('div', { id: 'main' }, el('header', { id: 'topbar' }), el('main', { id: 'content', tabindex: '-1' })),
     el('a', { id: 'points-blob', href: '#/progress', 'aria-label': 'My points and progress' }));
-  Store.onChange((kind) => { if (kind === 'ex' || kind === 'file') { drawTop(); drawSide(root.__cur || {}); } });
+  Store.onChange((kind) => { if (kind === 'ex' || kind === 'file' || kind === 'note') { drawTop(); drawSide(root.__cur || {}); } });
   window.addEventListener('hashchange', render);
   render();
   if (!Store.storageAvailable()) setTimeout(() => toast('This browser does not allow this page to store data. Use “Save progress” to keep your work in a file.', 'warn'), 800);

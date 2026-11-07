@@ -10,6 +10,7 @@ D.page({
 <ul>
 <li><b>Programming exercises</b> (the cards with a pencil) ask you to write assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. Your program runs in a simulator of the PIC16F887 with its registers, ports, timers, A/D converter, serial port and an LCD.</li>
 <li><b>Quizzes</b> (the cards with a question mark) check that you understood the ideas: multiple choice, short answers, filling in code, and <b>tracing</b> a program instruction by instruction.</li>
+<li><b>Notes:</b> select any text of the course and choose <b>Add note</b> to write your own note about it. The text is highlighted in yellow; click it to read or change the note. All your notes are listed under <a href="#/notes">All notes</a> in the menu, each with a link to its place in the course.</li>
 <li>Every exercise is worth <b>1 point</b>. Wrong answers cost nothing; try as many times as you need. A hint is always available, and the model solution can be opened after your first attempt.</li>
 </ul>`),
     D.KEY('Practising for an exam', R`<p>Exams on assembly ask you to read code as much as to write it. That is why every part has many tracing questions (what is in W, in a register and in the flags after each instruction), cycle counting, delay and timer calculations, and register settings. Part 14 collects mixed exam-style practice. Try to answer on paper first, then check your answer here.</p>`),

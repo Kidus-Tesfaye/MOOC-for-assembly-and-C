@@ -25,7 +25,7 @@ COURSES = [
         'out': 'index.html',
         'content': 'content',
         'theme': 'indigo',
-        'js': ['pic.js', 'asm.js', 'cinterp.js', 'util.js', 'dsl.js', 'exercises.js'],
+        'js': ['pic.js', 'asm.js', 'cinterp.js', 'util.js', 'dsl.js', 'exercises.js', 'notes.js'],
         'description': 'Learn C and assembly programming from zero on the PIC16F887: explanations, worked examples and '
                        'hundreds of exercises that run in your browser. Progress is saved on your own computer.',
         'config': {
@@ -56,7 +56,7 @@ COURSES = [
         'out': 'assembly.html',
         'content': 'content-asm',
         'theme': 'emerald',
-        'js': ['pic.js', 'asm.js', 'util.js', 'dsl.js', 'exercises.js'],
+        'js': ['pic.js', 'asm.js', 'util.js', 'dsl.js', 'exercises.js', 'notes.js'],
         'description': 'Learn PIC16F887 assembly programming from zero: the 35 instructions, flags, loops and delays, '
                        'subroutines, ports, interrupts, timers, PWM, the A/D converter, the LCD and the serial port, with '
                        'exam-style practice. Everything runs in your browser and progress is saved on your own computer.',

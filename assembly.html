@@ -491,6 +491,43 @@ table.regs th{background:var(--surface-2);font:600 12.5px var(--sans)}
 .modal-b p{font:14.5px/1.6 var(--sans);color:var(--text);margin:0 0 10px}
 .modal-btns{display:flex;justify-content:flex-end;gap:8px;margin:16px 0 4px}
 
+/* ---------- notes on the course text ---------- */
+mark.note-mark{position:relative;background:#ffe866;color:#1f1d0b;border-radius:2px;padding:.04em 0;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background .2s}
+mark.note-mark:hover,mark.note-mark.active{background:#ffd93b}
+mark.note-mark.flash-note{background:#ffc400;box-shadow:0 0 0 3px rgba(255,196,0,.45)}
+mark.note-mark code{background:rgba(255,255,255,.45);color:inherit}
+.note-ico{position:absolute;left:-7px;top:-1.15em;width:22px;height:20px;display:inline-flex;cursor:pointer;z-index:3;line-height:0;font-size:16px}
+h1 .note-ico,.sec-h .note-ico{top:-.55em}
+.note-ico svg{width:22px;height:20px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
+.note-ico:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+.sel-menu{position:absolute;z-index:75;display:none;background:#262626;border-radius:12px;padding:6px;box-shadow:0 12px 30px -6px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06)}
+.sel-menu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:8px;color:#fff;padding:8px 14px;font:500 14.5px/1.3 var(--sans);white-space:nowrap}
+.sel-menu button:hover,.sel-menu button:focus-visible{background:#3d3d3d;outline:none}
+.sel-menu .ico{width:17px;height:17px}
+.note-pop{position:absolute;z-index:76;width:360px;max-width:calc(100vw - 16px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 48px -16px rgba(16,24,40,.45);padding:14px 16px 12px;font:14.5px/1.5 var(--sans)}
+.note-pop-h{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.note-pop-h b{font:700 15px var(--head)}
+.note-pop-h small{margin-left:auto;color:var(--muted);font-size:12px}
+.note-pop-ico{display:inline-flex;width:22px;height:20px}
+.note-pop-ico svg{width:100%;height:100%}
+.note-quote{margin:0 0 10px;padding:6px 10px;border-left:3px solid #f5c400;background:var(--surface-2);border-radius:6px;color:var(--text);font-size:13.5px;max-height:6.5em;overflow:auto;white-space:pre-wrap}
+.note-ta{width:100%;min-height:96px;resize:vertical;font:14.5px/1.5 var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--input-line);border-radius:10px;padding:8px 10px}
+.note-ta:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+.note-pop-btns{display:flex;align-items:center;gap:8px;margin-top:10px}
+.note-pop-btns .grow,.note-item-f .grow{flex:1}
+.notes-empty{display:flex;align-items:center;gap:10px;padding:18px 20px;color:var(--muted);font:15px var(--sans)}
+.notes-count{font:600 13px var(--sans)!important;color:var(--muted)!important;margin:0 0 10px!important}
+.notes-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.note-item{padding:14px 18px}
+.note-item-t{font:16px/1.65 var(--body)!important;color:var(--text)!important;margin:0 0 8px!important;white-space:pre-wrap;overflow-wrap:anywhere}
+.note-item-t mark.note-mark{cursor:default}
+.note-colon{font-weight:600}
+.note-item-f{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font:13.5px/1.5 var(--sans);color:var(--muted)}
+.note-where a{color:var(--accent);font-weight:600;text-decoration:none}
+.note-where a:hover{text-decoration:underline}
+.linkbtn{background:none;border:0;padding:0;color:var(--bad);font:600 13px var(--sans)}
+.linkbtn:hover{text-decoration:underline}
+
 /* ---------- dark mode (html[data-mode=dark], chosen with the moon/sun button) ---------- */
 html[data-mode=dark]{
   color-scheme:dark;
@@ -552,9 +589,10 @@ html[data-mode=dark] #points-blob{background:#1e293b}
   .bitcell{width:calc(25% - 5px)}
   .eos-card{padding:16px}
   #points-blob{right:12px;bottom:12px;height:42px;padding:0 14px 0 12px}
+  .note-pop{left:8px!important;right:8px;width:auto}
   .pb-l{display:none}
 }
-@media print{#sidebar,#topbar,#points-blob,.btns,.site-footer,.cpf,.hero-r{display:none}#main{margin:0}}
+@media print{#sidebar,#topbar,#points-blob,.btns,.site-footer,.cpf,.hero-r,.note-ico,.sel-menu,.note-pop{display:none}#main{margin:0}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 </style>
@@ -1360,6 +1398,7 @@ const ICON = {
   save: '<svg viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V173.3c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32H64zm0 96c0-17.7 14.3-32 32-32H288c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V128zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>',
   load: '<svg viewBox="0 0 576 512" aria-hidden="true"><path fill="currentColor" d="M88.7 223.8L0 375.8V96C0 60.7 28.7 32 64 32H181.5c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7H416c35.3 0 64 28.7 64 64v32H144c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224H544c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480H32c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/></svg>',
   chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/><path d="M10 10h4v4h-4z"/></g></svg>',
+  note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>',
   moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.7 14.6A8.6 8.6 0 0 1 9.4 3.3a.7.7 0 0 0-.9-.9A10 10 0 1 0 21.6 15.5a.7.7 0 0 0-.9-.9z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></g></svg>',
   star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>',
@@ -1498,7 +1537,7 @@ function renderMath(rootEl) {
 const KEY = CFG.storageKey;
 const APP_ID = CFG.appId;
 let mem = null, listeners = [], storageOk = null, lastLocalSave = null;
-function freshState() { return { app: APP_ID, version: 1, created: new Date().toISOString(), ex: {}, pos: null, visited: {}, fileSavedAt: null, changesSinceFile: 0 }; }
+function freshState() { return { app: APP_ID, version: 1, created: new Date().toISOString(), ex: {}, pos: null, visited: {}, notes: {}, fileSavedAt: null, changesSinceFile: 0 }; }
 function probeStorage() {
   if (storageOk !== null) return storageOk;
   try { const k = '__probe__' + Math.random(); root.localStorage.setItem(k, '1'); root.localStorage.removeItem(k); storageOk = true; } catch (e) { storageOk = false; }
@@ -1527,7 +1566,7 @@ const Store = {
   /* everything needed to restore the progress later */
   exportData() {
     const s = this.load();
-    return JSON.stringify({ app: APP_ID, version: 1, savedAt: new Date().toISOString(), courseVersion: MOOC.version, ex: s.ex, pos: s.pos, visited: s.visited, created: s.created }, null, 1);
+    return JSON.stringify({ app: APP_ID, version: 1, savedAt: new Date().toISOString(), courseVersion: MOOC.version, ex: s.ex, notes: s.notes || {}, pos: s.pos, visited: s.visited, created: s.created }, null, 1);
   },
   parseImport(text) {
     let d;
@@ -1545,15 +1584,24 @@ const Store = {
         else if (b.done && !a.done) s.ex[id] = b;
         else if (b.done === a.done && (b.at || '') > (a.at || '')) s.ex[id] = b;
       });
+      s.notes = s.notes || {};
+      Object.keys(d.notes && typeof d.notes === 'object' ? d.notes : {}).forEach(id => {
+        const a = s.notes[id], b = d.notes[id];
+        if (!a || (b.updated || '') > (a.updated || '')) s.notes[id] = b;
+      });
       Object.assign(s.visited, d.visited || {});
       if (!s.pos) s.pos = d.pos || null;
     } else {
-      mem = Object.assign(freshState(), { ex: d.ex || {}, pos: d.pos || null, visited: d.visited || {}, created: d.created || new Date().toISOString() });
+      mem = Object.assign(freshState(), { ex: d.ex || {}, notes: d.notes && typeof d.notes === 'object' ? d.notes : (s.notes || {}), pos: d.pos || null, visited: d.visited || {}, created: d.created || new Date().toISOString() });
     }
     this.load().fileSavedAt = new Date().toISOString(); this.load().changesSinceFile = 0;
     this.persist();
     listeners.forEach(f => f('import'));
   },
+  /* notes on the course text: { id: { id, page, label, href, quote, prefix, suffix, text, created, updated } } */
+  notes() { const s = this.load(); if (!s.notes) s.notes = {}; return s.notes; },
+  saveNote(n) { n.updated = new Date().toISOString(); if (!n.created) n.created = n.updated; this.notes()[n.id] = n; this.changed('note'); },
+  deleteNote(id) { delete this.notes()[id]; this.changed('note'); },
   markFileSaved() { const s = this.load(); s.fileSavedAt = new Date().toISOString(); s.changesSinceFile = 0; this.persist(); listeners.forEach(f => f('file')); },
   sandbox(fn) {
     const keep = mem, keepL = listeners, keepP = this.persist;
@@ -2375,6 +2423,245 @@ MOOC.exTypes = T;
 MOOC.util = { parseNum, parseHex, parseBin, checkValue, normText, stripComments, toBin, normOut, evalTest };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* Notes on the course text. Select text, choose "Add note" in the small menu, write the note: the text is
+   highlighted in yellow with a note icon, and a click on it opens the note again. A note is anchored by the
+   text it quotes plus a little context before and after, so it still finds its place when the page is
+   rendered again. Notes are kept with the progress (browser storage and progress files). */
+(function (root) {
+'use strict';
+const { el, $$, ICON, Store } = MOOC;
+
+/* text that can carry a note, and parts of those areas that never do */
+const NOTABLE = '.lesson, .content > h1, .sec-h, .sec-h3, .tbox, .table-wrap, .code-block, .example, .sample-out, .side, .fig, .q, .ex-titles h3, .part-intro';
+const SKIP = '.katex-mathml, .note-ico, .ln, button, textarea, input, select, .editor, .btns, .run-out, .fb';
+const BUBBLE = '<svg viewBox="0 0 24 22" aria-hidden="true"><path d="M3 2.5h18a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H11l-5 4.5v-4.5H3A1.5 1.5 0 0 1 1.5 14V4A1.5 1.5 0 0 1 3 2.5z" fill="#ffe866" stroke="#5b4a00" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 7h12M6 10.5h9" stroke="#5b4a00" stroke-width="1.4" stroke-linecap="round"/></svg>';
+const CONTEXT = 40;
+
+let article = null;   // the article of the current page
+let page = null;      // { key, label, href } of the current page, or null where notes are not possible
+let menu = null, pop = null, pending = null, pendingBox = null, mouseDown = false, timer = null;
+
+/* ---------- the text of the page, as one string over its notable text nodes ---------- */
+function model(art) {
+  const nodes = [];
+  let text = '';
+  const w = document.createTreeWalker(art, NodeFilter.SHOW_TEXT, { acceptNode(n) {
+    const p = n.parentElement;
+    return p && p.closest(NOTABLE) && !p.closest(SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+  } });
+  for (let n = w.nextNode(); n; n = w.nextNode()) { nodes.push({ n, s: text.length }); text += n.nodeValue; }
+  return { nodes, text };
+}
+function rangeToAnchor(range, M) {
+  let a = -1, b = -1;
+  for (const { n, s } of M.nodes) {
+    if (!range.intersectsNode(n)) continue;
+    const st = n === range.startContainer ? range.startOffset : 0;
+    const en = n === range.endContainer ? range.endOffset : n.nodeValue.length;
+    if (en <= st) continue;
+    if (a < 0) a = s + st;
+    b = s + en;
+  }
+  if (a < 0) return null;
+  while (a < b && /\s/.test(M.text[a])) a++;
+  while (b > a && /\s/.test(M.text[b - 1])) b--;
+  if (b <= a) return null;
+  return { quote: M.text.slice(a, b), prefix: M.text.slice(Math.max(0, a - CONTEXT), a), suffix: M.text.slice(b, b + CONTEXT) };
+}
+const commonEnd = (x, y) => { let k = 0; while (k < x.length && k < y.length && x[x.length - 1 - k] === y[y.length - 1 - k]) k++; return k; };
+const commonStart = (x, y) => { let k = 0; while (k < x.length && k < y.length && x[k] === y[k]) k++; return k; };
+/* the place of a note in the page: the occurrence of its quote whose context matches best */
+function locate(note, M) {
+  const q = note.quote || '';
+  if (!q) return null;
+  let best = -1, bestScore = -1;
+  for (let i = M.text.indexOf(q); i >= 0; i = M.text.indexOf(q, i + 1)) {
+    const score = commonEnd(M.text.slice(Math.max(0, i - CONTEXT), i), note.prefix || '') + commonStart(M.text.slice(i + q.length, i + q.length + CONTEXT), note.suffix || '');
+    if (score > bestScore) { bestScore = score; best = i; }
+  }
+  return best < 0 ? null : { start: best, end: best + q.length };
+}
+/* wrap the characters start...end of the page text in <mark> elements (one per text node) */
+function wrap(M, start, end, note) {
+  const marks = [];
+  for (const { n, s } of M.nodes) {
+    const e = s + n.nodeValue.length;
+    if (e <= start || s >= end) continue;
+    const a = Math.max(start, s) - s, b = Math.min(end, e) - s;
+    if (b <= a) continue;
+    if (/^\s*$/.test(n.nodeValue.slice(a, b)) && /^(TABLE|THEAD|TBODY|TR|UL|OL)$/.test(n.parentNode.nodeName)) continue;
+    let node = n;
+    if (b < node.nodeValue.length) node.splitText(b);
+    if (a > 0) node = node.splitText(a);
+    const m = document.createElement('mark');
+    m.className = 'note-mark';
+    m.dataset.note = note.id;
+    m.title = note.text;
+    node.parentNode.insertBefore(m, node);
+    m.appendChild(node);
+    marks.push(m);
+  }
+  return marks;
+}
+function unwrapAll() {
+  $$('mark.note-mark', article).forEach(m => {
+    $$('.note-ico', m).forEach(i => i.remove());
+    const p = m.parentNode;
+    if (!p) return;
+    while (m.firstChild) p.insertBefore(m.firstChild, m);
+    p.removeChild(m);
+    p.normalize();
+  });
+}
+function notesHere() {
+  return Object.values(Store.notes()).filter(n => page && n.page === page.key).sort((x, y) => ((x.created || '') < (y.created || '') ? -1 : 1));
+}
+/* highlight every note of the page */
+function paint() {
+  if (!article) return;
+  unwrapAll();
+  notesHere().forEach(n => {
+    const at = locate(n, model(article));
+    if (!at) return;
+    const marks = wrap(model(article), at.start, at.end, n);
+    if (!marks.length) return;
+    const ico = el('span', { class: 'note-ico', role: 'button', tabindex: '0', title: n.text, 'aria-label': 'Open the note on this text', html: BUBBLE });
+    ico.dataset.note = n.id;
+    marks[0].insertBefore(ico, marks[0].firstChild);
+  });
+}
+
+/* ---------- the small menu that appears next to a selection ---------- */
+function hideMenu() { if (menu) menu.style.display = 'none'; pending = null; }
+function showMenu(anchor, box, last) {
+  pending = anchor; pendingBox = box;
+  if (!menu) {
+    menu = el('div', { class: 'sel-menu', role: 'menu' },
+      el('button', { type: 'button', role: 'menuitem', onmousedown: (e) => e.preventDefault(), onclick: () => { const a = pending, r = pendingBox; hideMenu(); if (a) openEditor({ anchor: a, box: r }); } },
+        el('span', { class: 'ico', html: ICON.note }), 'Add note'));
+    document.body.append(menu);
+  }
+  menu.style.display = 'block';
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  const coarse = root.matchMedia && root.matchMedia('(pointer: coarse)').matches;
+  let top = box.top + root.scrollY - h - 10;
+  if (coarse || box.top < h + 80) top = box.bottom + root.scrollY + 10;
+  const left = Math.max(root.scrollX + 8, Math.min(last.right + root.scrollX - w / 2, root.scrollX + document.documentElement.clientWidth - w - 8));
+  menu.style.top = top + 'px';
+  menu.style.left = left + 'px';
+}
+function checkSelection() {
+  if (!article || !page || pop) return hideMenu();
+  const sel = root.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return hideMenu();
+  const r = sel.getRangeAt(0);
+  if (!article.contains(r.commonAncestorContainer)) return hideMenu();
+  const at = rangeToAnchor(r, model(article));
+  if (!at || at.quote.length > 2000) return hideMenu();
+  const rects = r.getClientRects();
+  showMenu(at, r.getBoundingClientRect(), rects.length ? rects[rects.length - 1] : r.getBoundingClientRect());
+}
+
+/* ---------- the note editor ---------- */
+const shorten = (s, n) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+function closeEditor() {
+  if (pop) { pop.remove(); pop = null; }
+  $$('mark.note-mark.active').forEach(m => m.classList.remove('active'));
+}
+function openEditor(o) {
+  closeEditor();
+  const isNew = !o.note;
+  const n = o.note ? Object.assign({}, o.note) : { id: 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), page: page.key, label: page.label, href: page.href, quote: o.anchor.quote, prefix: o.anchor.prefix, suffix: o.anchor.suffix, text: '' };
+  const ta = el('textarea', { class: 'note-ta', rows: 4, placeholder: 'Write your note…', 'aria-label': 'Your note' });
+  ta.value = n.text || '';
+  const bSave = el('button', { class: 'mbtn primary', type: 'button' }, 'Save note');
+  const upd = () => { bSave.disabled = !ta.value.trim(); };
+  const save = () => {
+    const t = ta.value.trim();
+    if (!t) return;
+    n.text = t;
+    Store.saveNote(n);
+    closeEditor();
+    const sel = root.getSelection(); if (sel) sel.removeAllRanges();
+    paint();
+  };
+  const del = () => {
+    if (!root.confirm('Delete this note?')) return;
+    Store.deleteNote(n.id);
+    closeEditor();
+    paint();
+  };
+  bSave.addEventListener('click', save);
+  ta.addEventListener('input', upd);
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeEditor(); }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); }
+  });
+  pop = el('div', { class: 'note-pop', role: 'dialog', 'aria-label': isNew ? 'New note' : 'Note' },
+    el('div', { class: 'note-pop-h' }, el('span', { class: 'note-pop-ico', html: BUBBLE }), el('b', { text: isNew ? 'New note' : 'Your note' }), n.updated ? el('small', { text: new Date(n.updated).toLocaleString() }) : null),
+    el('blockquote', { class: 'note-quote', text: shorten(n.quote, 180) }),
+    ta,
+    el('div', { class: 'note-pop-btns' }, isNew ? null : el('button', { class: 'mbtn danger', type: 'button', onclick: del }, 'Delete'), el('span', { class: 'grow' }),
+      el('button', { class: 'mbtn', type: 'button', onclick: closeEditor }, 'Cancel'), bSave));
+  pop.dataset.orig = n.text || '';
+  document.body.append(pop);
+  upd();
+  const box = o.box;
+  const w = pop.offsetWidth;
+  const left = Math.max(root.scrollX + 8, Math.min(box.left + root.scrollX, root.scrollX + document.documentElement.clientWidth - w - 8));
+  pop.style.top = (box.bottom + root.scrollY + 12) + 'px';
+  pop.style.left = left + 'px';
+  ta.focus();
+  if (!isNew) $$('mark.note-mark').forEach(m => { if (m.dataset.note === n.id) m.classList.add('active'); });
+}
+function openNote(id) {
+  const n = Store.notes()[id];
+  if (!n || !article) return;
+  const m = $$('mark.note-mark', article).find(x => x.dataset.note === id);
+  if (!m) return;
+  openEditor({ note: n, box: m.getBoundingClientRect() });
+}
+const dirty = () => pop && $$('textarea', pop)[0] && $$('textarea', pop)[0].value.trim() !== (pop.dataset.orig || '').trim();
+
+/* ---------- events ---------- */
+document.addEventListener('mousedown', (e) => {
+  mouseDown = true;
+  if (menu && !menu.contains(e.target)) hideMenu();
+  if (pop && !pop.contains(e.target) && !(e.target.closest && e.target.closest('.note-ico, mark.note-mark')) && !dirty()) closeEditor();
+});
+document.addEventListener('mouseup', () => { mouseDown = false; setTimeout(checkSelection, 10); });
+document.addEventListener('selectionchange', () => { if (mouseDown) return; clearTimeout(timer); timer = setTimeout(checkSelection, 350); });
+document.addEventListener('keyup', (e) => { if (e.shiftKey || e.key === 'Shift') setTimeout(checkSelection, 10); });
+document.addEventListener('click', (e) => {
+  const t = e.target.closest && e.target.closest('.note-ico, mark.note-mark');
+  if (!t || !article || !article.contains(t)) return;
+  const sel = root.getSelection();
+  if (sel && !sel.isCollapsed) return;   /* the reader is selecting text, not opening the note */
+  e.preventDefault();
+  openNote(t.dataset.note);
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('note-ico')) { e.preventDefault(); openNote(e.target.dataset.note); }
+  if (e.key === 'Escape') hideMenu();
+});
+root.addEventListener('resize', hideMenu);
+
+MOOC.Notes = {
+  BUBBLE,
+  /* called after every page render: info is { key, label, href } or null where notes are not possible */
+  attach(art, info) { hideMenu(); closeEditor(); article = art || null; page = info || null; if (article && page) paint(); },
+  /* scroll to a note of the current page and open it */
+  show(id) {
+    const m = article && $$('mark.note-mark', article).find(x => x.dataset.note === id);
+    if (!m) return false;
+    m.scrollIntoView({ block: 'center' });
+    $$('mark.note-mark', article).forEach(x => { if (x.dataset.note === id) { x.classList.add('flash-note'); setTimeout(() => x.classList.remove('flash-note'), 1800); } });
+    return true;
+  },
+  repaint: () => paint()
+};
+})(window);
+
 /* ---- 00_pages.js ---- */
 /* Pages that are not part of a numbered part: the home page text and "About the material". */
 (function () {
@@ -2388,6 +2675,7 @@ D.page({
 <ul>
 <li><b>Programming exercises</b> (the cards with a pencil) ask you to write assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. Your program runs in a simulator of the PIC16F887 with its registers, ports, timers, A/D converter, serial port and an LCD.</li>
 <li><b>Quizzes</b> (the cards with a question mark) check that you understood the ideas: multiple choice, short answers, filling in code, and <b>tracing</b> a program instruction by instruction.</li>
+<li><b>Notes:</b> select any text of the course and choose <b>Add note</b> to write your own note about it. The text is highlighted in yellow; click it to read or change the note. All your notes are listed under <a href="#/notes">All notes</a> in the menu, each with a link to its place in the course.</li>
 <li>Every exercise is worth <b>1 point</b>. Wrong answers cost nothing; try as many times as you need. A hint is always available, and the model solution can be opened after your first attempt.</li>
 </ul>`),
     D.KEY('Practising for an exam', R`<p>Exams on assembly ask you to read code as much as to write it. That is why every part has many tracing questions (what is in W, in a register and in the flags after each instruction), cycle counting, delay and timer calculations, and register settings. Part 14 collects mixed exam-style practice. Try to answer on paper first, then check your answer here.</p>`),
@@ -4782,8 +5070,10 @@ async function doLoad() {
   try { d = Store.parseImport(f.text); } catch (e) { modal('Cannot load this file', [el('p', { text: e.message })], [{ text: 'OK', cls: 'primary' }]); return; }
   const n = Object.values(d.ex).filter(x => x.done).length;
   const cur = Object.values(Store.load().ex).filter(x => x.done).length;
+  const nn = d.notes ? Object.keys(d.notes).length : 0;
+  const plural = (k, w) => k + ' ' + w + (k === 1 ? '' : 's');
   modal('Load progress from ' + f.name + '?', [
-    el('p', { text: 'The file was saved on ' + (d.savedAt ? new Date(d.savedAt).toLocaleString() : 'an unknown date') + ' and contains ' + n + ' completed exercise' + (n === 1 ? '' : 's') + '.' }),
+    el('p', { text: 'The file was saved on ' + (d.savedAt ? new Date(d.savedAt).toLocaleString() : 'an unknown date') + ' and contains ' + plural(n, 'completed exercise') + (d.notes ? ' and ' + plural(nn, 'note') : '') + '.' + (d.notes ? '' : ' It was saved before notes existed: your notes in this browser are kept either way.') }),
     el('p', { text: 'This browser currently has ' + cur + ' completed exercise' + (cur === 1 ? '' : 's') + '. Combine keeps everything that is completed in either one; Replace uses only the file.' })
   ], [{ text: 'Cancel' }, { text: 'Replace', onclick: () => { Store.importData(d, 'replace'); toast('Progress loaded from ' + f.name + '.'); render(); } }, { text: 'Combine', cls: 'primary', onclick: () => { Store.importData(d, 'merge'); toast('Progress from ' + f.name + ' combined with this browser.'); render(); } }]);
 }
@@ -4812,7 +5102,7 @@ function crumbs() {
   const items = [el('a', { href: '#/', text: CFG.short || 'Home' })];
   if (c.p) items.push(sep(), c.s ? el('a', { href: '#/' + c.p.slug, text: 'Part ' + c.p.num }) : el('b', { text: 'Part ' + c.p.num }));
   if (c.s) items.push(sep(), el('b', { text: c.s.num + '. ' + c.s.title }));
-  const named = { progress: 'My progress and saving', exercises: 'All exercises' }[c.kind] || (c.kind === 'page' && c.page ? c.page.title : '');
+  const named = { progress: 'My progress and saving', exercises: 'All exercises', notes: 'All notes' }[c.kind] || (c.kind === 'page' && c.page ? c.page.title : '');
   if (named) items.push(sep(), el('b', { text: named }));
   return el('nav', { class: 'crumbs', 'aria-label': 'You are here' }, items);
 }
@@ -4842,6 +5132,8 @@ function drawSide(cur) {
   ul.append(navItem('#/', 'About this course', cur.kind === 'home'));
   ul.append(navItem('#/progress', 'My progress and saving', cur.kind === 'progress'));
   ul.append(navItem('#/exercises', 'All exercises', cur.kind === 'exercises'));
+  const nNotes = Object.keys(Store.notes()).length;
+  ul.append(navItem('#/notes', 'All notes' + (nNotes ? ' (' + nNotes + ')' : ''), cur.kind === 'notes'));
   MOOC.pages.filter(pg => pg.nav).forEach(pg => ul.append(navItem('#/' + pg.slug, pg.title, cur.kind === 'page' && cur.page === pg)));
   let lastG = 0;
   MOOC.parts.forEach(p => {
@@ -5042,9 +5334,63 @@ function nextTarget() {
   return firstOpen || MOOC.flat[0];
 }
 
+/* ---------- notes: which page is shown (notes are kept per page) ---------- */
+function notePage(c) {
+  if (c.kind === 'section') return { key: 's' + c.p.num + '.' + c.s.num, label: 'Part ' + c.p.num + ' · ' + c.s.num + '. ' + c.s.title, href: secHref(c.p, c.s) };
+  if (c.kind === 'part') return { key: 'part' + c.p.num, label: 'Part ' + c.p.num + ': ' + plain(c.p.title), href: '#/' + c.p.slug };
+  if (c.kind === 'home') return { key: 'home', label: 'About this course', href: '#/' };
+  if (c.kind === 'page' && c.page) return { key: 'page:' + c.page.slug, label: c.page.title, href: '#/' + c.page.slug };
+  return null;
+}
+function noteOrder(n) {
+  const k = n.page || '';
+  let m;
+  if (k === 'home') return 0;
+  if ((m = /^part(\d+)$/.exec(k))) return +m[1] * 1000;
+  if ((m = /^s(\d+)\.(\d+)$/.exec(k))) return +m[1] * 1000 + +m[2];
+  return 1e6;
+}
+/* where a note lives, from its page key (so the link stays right if a title changes) */
+function noteWhere(n) {
+  let m;
+  if ((m = /^s(\d+)\.(\d+)$/.exec(n.page || '')) && MOOC.parts[+m[1] - 1] && MOOC.parts[+m[1] - 1].sections[+m[2] - 1]) {
+    const p = MOOC.parts[+m[1] - 1], sec = p.sections[+m[2] - 1];
+    return { label: 'Part ' + p.num + ': ' + plain(p.title) + ' › ' + sec.num + '. ' + sec.title, href: secHref(p, sec) };
+  }
+  if ((m = /^part(\d+)$/.exec(n.page || '')) && MOOC.parts[+m[1] - 1]) { const p = MOOC.parts[+m[1] - 1]; return { label: 'Part ' + p.num + ': ' + plain(p.title), href: '#/' + p.slug }; }
+  if (n.page === 'home') return { label: 'About this course', href: '#/' };
+  if ((m = /^page:(.+)$/.exec(n.page || ''))) { const pg = MOOC.pages.find(x => x.slug === m[1]); if (pg) return { label: pg.title, href: '#/' + pg.slug }; }
+  return { label: n.label || 'Unknown page', href: n.href || '#/' };
+}
+function renderAllNotes() {
+  root.__cur = { kind: 'notes' };
+  const art = el('article', { class: 'content' });
+  art.append(el('h1', { text: 'All notes' }));
+  art.append(el('p', { class: 'lead-p', html: 'Select any text of the course and choose <b>Add note</b> to write a note about it. The text is highlighted in yellow; click it to read, change or delete the note. Every note is listed here with the place where it lives. Notes are saved with your progress, in this browser and in the progress file.' }));
+  const all = Object.values(Store.notes()).sort((a, b) => noteOrder(a) - noteOrder(b) || ((a.created || '') < (b.created || '') ? -1 : 1));
+  if (!all.length) { art.append(el('div', { class: 'paper notes-empty' }, el('span', { class: 'note-pop-ico', html: MOOC.Notes.BUBBLE }), el('span', { text: 'You have no notes yet.' }))); return art; }
+  art.append(el('p', { class: 'notes-count', text: all.length + (all.length === 1 ? ' note' : ' notes') }));
+  const list = el('ol', { class: 'notes-list' });
+  all.forEach(n => {
+    const where = noteWhere(n);
+    const quote = n.quote.length > 300 ? n.quote.slice(0, 299) + '…' : n.quote;
+    list.append(el('li', { class: 'paper note-item' },
+      el('p', { class: 'note-item-t' }, el('mark', { class: 'note-mark', text: quote }), el('span', { class: 'note-colon', text: ': ' }), el('span', { text: n.text })),
+      el('div', { class: 'note-item-f' },
+        el('span', { class: 'note-where' }, 'Location: ', el('a', { href: where.href + '?note=' + n.id, title: 'Go to this note in the course', text: where.label })),
+        el('span', { class: 'grow' }),
+        el('span', { class: 'note-date', text: n.updated ? new Date(n.updated).toLocaleDateString() : '' }),
+        el('button', { class: 'linkbtn', type: 'button', onclick: () => { if (root.confirm('Delete this note?')) { Store.deleteNote(n.id); render(); } } }, 'Delete'))));
+  });
+  art.append(list);
+  return art;
+}
+
 /* ---------- router ---------- */
 function render() {
-  const h = decodeURIComponent(location.hash || '#/');
+  const h0 = decodeURIComponent(location.hash || '#/');
+  const nq = /\?note=([\w-]+)$/.exec(h0);
+  const h = nq ? h0.slice(0, nq.index) || '#/' : h0;
   const main = $('#content'); main.innerHTML = '';
   document.body.classList.remove('menu-open');
   let m, node, title = COURSE, scrollTo = null;
@@ -5058,6 +5404,7 @@ function render() {
     } else { node = renderPart(p); title = 'Part ' + p.num + ' - ' + COURSE; }
   } else if (h === '#/progress') { node = renderProgress(); title = 'My progress and saving - ' + COURSE; }
   else if (h === '#/exercises') { node = renderAllExercises(); title = 'All exercises - ' + COURSE; }
+  else if (h === '#/notes') { node = renderAllNotes(); title = 'All notes - ' + COURSE; }
   else if ((m = /^#\/([\w-]+)$/.exec(h)) && MOOC.pages.find(pg => pg.slug === m[1] && pg.slug !== 'home')) { const pg = MOOC.pages.find(x => x.slug === m[1]); node = renderStaticPage(pg); title = pg.title + ' - ' + COURSE; }
   else node = renderHome();
   main.append(node);
@@ -5065,6 +5412,8 @@ function render() {
   renderMath(main);
   document.title = title;
   drawTop(); drawSide(root.__cur || {});
+  MOOC.Notes.attach($('article.content', main), notePage(root.__cur || {}));
+  if (nq && MOOC.Notes.show(nq[1])) return;
   if (scrollTo) { const t = document.getElementById(scrollTo); if (t) { t.scrollIntoView({ block: 'start' }); t.classList.add('flash'); setTimeout(() => t.classList.remove('flash'), 1600); return; } }
   window.scrollTo(0, 0);
 }
@@ -5109,7 +5458,7 @@ function boot() {
   app.append(el('nav', { id: 'sidebar', 'aria-label': 'Course contents' }), el('div', { class: 'menu-backdrop', onclick: () => document.body.classList.remove('menu-open') }),
     el('div', { id: 'main' }, el('header', { id: 'topbar' }), el('main', { id: 'content', tabindex: '-1' })),
     el('a', { id: 'points-blob', href: '#/progress', 'aria-label': 'My points and progress' }));
-  Store.onChange((kind) => { if (kind === 'ex' || kind === 'file') { drawTop(); drawSide(root.__cur || {}); } });
+  Store.onChange((kind) => { if (kind === 'ex' || kind === 'file' || kind === 'note') { drawTop(); drawSide(root.__cur || {}); } });
   window.addEventListener('hashchange', render);
   render();
   if (!Store.storageAvailable()) setTimeout(() => toast('This browser does not allow this page to store data. Use “Save progress” to keep your work in a file.', 'warn'), 800);

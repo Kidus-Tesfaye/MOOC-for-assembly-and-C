@@ -39,6 +39,7 @@ const ICON = {
   save: '<svg viewBox="0 0 448 512" aria-hidden="true"><path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V173.3c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32H64zm0 96c0-17.7 14.3-32 32-32H288c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V128zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>',
   load: '<svg viewBox="0 0 576 512" aria-hidden="true"><path fill="currentColor" d="M88.7 223.8L0 375.8V96C0 60.7 28.7 32 64 32H181.5c17 0 33.3 6.7 45.3 18.7l26.5 26.5c12 12 28.3 18.7 45.3 18.7H416c35.3 0 64 28.7 64 64v32H144c-22.8 0-43.8 12.1-55.3 31.8zm27.6 16.1C122.1 230 132.6 224 144 224H544c11.5 0 22 6.1 27.7 16.1s5.7 22.2-.1 32.1l-112 192C453.9 474 443.4 480 432 480H32c-11.5 0-22-6.1-27.7-16.1s-5.7-22.2 .1-32.1l112-192z"/></svg>',
   chip: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/><path d="M10 10h4v4h-4z"/></g></svg>',
+  note: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>',
   moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.7 14.6A8.6 8.6 0 0 1 9.4 3.3a.7.7 0 0 0-.9-.9A10 10 0 1 0 21.6 15.5a.7.7 0 0 0-.9-.9z"/></svg>',
   sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6"/></g></svg>',
   star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>',
@@ -177,7 +178,7 @@ function renderMath(rootEl) {
 const KEY = CFG.storageKey;
 const APP_ID = CFG.appId;
 let mem = null, listeners = [], storageOk = null, lastLocalSave = null;
-function freshState() { return { app: APP_ID, version: 1, created: new Date().toISOString(), ex: {}, pos: null, visited: {}, fileSavedAt: null, changesSinceFile: 0 }; }
+function freshState() { return { app: APP_ID, version: 1, created: new Date().toISOString(), ex: {}, pos: null, visited: {}, notes: {}, fileSavedAt: null, changesSinceFile: 0 }; }
 function probeStorage() {
   if (storageOk !== null) return storageOk;
   try { const k = '__probe__' + Math.random(); root.localStorage.setItem(k, '1'); root.localStorage.removeItem(k); storageOk = true; } catch (e) { storageOk = false; }
@@ -206,7 +207,7 @@ const Store = {
   /* everything needed to restore the progress later */
   exportData() {
     const s = this.load();
-    return JSON.stringify({ app: APP_ID, version: 1, savedAt: new Date().toISOString(), courseVersion: MOOC.version, ex: s.ex, pos: s.pos, visited: s.visited, created: s.created }, null, 1);
+    return JSON.stringify({ app: APP_ID, version: 1, savedAt: new Date().toISOString(), courseVersion: MOOC.version, ex: s.ex, notes: s.notes || {}, pos: s.pos, visited: s.visited, created: s.created }, null, 1);
   },
   parseImport(text) {
     let d;
@@ -224,15 +225,24 @@ const Store = {
         else if (b.done && !a.done) s.ex[id] = b;
         else if (b.done === a.done && (b.at || '') > (a.at || '')) s.ex[id] = b;
       });
+      s.notes = s.notes || {};
+      Object.keys(d.notes && typeof d.notes === 'object' ? d.notes : {}).forEach(id => {
+        const a = s.notes[id], b = d.notes[id];
+        if (!a || (b.updated || '') > (a.updated || '')) s.notes[id] = b;
+      });
       Object.assign(s.visited, d.visited || {});
       if (!s.pos) s.pos = d.pos || null;
     } else {
-      mem = Object.assign(freshState(), { ex: d.ex || {}, pos: d.pos || null, visited: d.visited || {}, created: d.created || new Date().toISOString() });
+      mem = Object.assign(freshState(), { ex: d.ex || {}, notes: d.notes && typeof d.notes === 'object' ? d.notes : (s.notes || {}), pos: d.pos || null, visited: d.visited || {}, created: d.created || new Date().toISOString() });
     }
     this.load().fileSavedAt = new Date().toISOString(); this.load().changesSinceFile = 0;
     this.persist();
     listeners.forEach(f => f('import'));
   },
+  /* notes on the course text: { id: { id, page, label, href, quote, prefix, suffix, text, created, updated } } */
+  notes() { const s = this.load(); if (!s.notes) s.notes = {}; return s.notes; },
+  saveNote(n) { n.updated = new Date().toISOString(); if (!n.created) n.created = n.updated; this.notes()[n.id] = n; this.changed('note'); },
+  deleteNote(id) { delete this.notes()[id]; this.changed('note'); },
   markFileSaved() { const s = this.load(); s.fileSavedAt = new Date().toISOString(); s.changesSinceFile = 0; this.persist(); listeners.forEach(f => f('file')); },
   sandbox(fn) {
     const keep = mem, keepL = listeners, keepP = this.persist;
