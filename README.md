@@ -16,6 +16,14 @@ Two offline, interactive courses for learning to program the PIC16F887 from zero
 That is all: each file contains everything (the course text, the fonts, KaTeX for the mathematics, the PIC16F887
 simulator and, in `index.html`, the C interpreter). No server, no account and no internet connection are needed.
 
+### Notes
+
+* Select any text of a course: a small menu appears with **Add note**. Write your note and save it: the
+  text is highlighted in yellow with a note icon. Click the highlighted text (or the icon) to read, change
+  or delete the note.
+* **All notes** in the menu (below *All exercises*) lists every note as *highlighted text: your note*,
+  with a link to the exact place in the course where it lives.
+
 ### Saving your progress
 
 * Every answer you check is **saved automatically in your browser** (localStorage).
@@ -26,6 +34,8 @@ simulator and, in `index.html`, the C interpreter). No server, no account and no
   *replace* it. Use this to move to another computer or browser, or after clearing the browser data.
 * The page **My progress and saving** shows your points per part, when you last saved to a file, and a
   reset button.
+* The progress file also carries your **notes**. Files saved before notes existed still load in both
+  courses: they restore your exercises, and the notes already in the browser are kept.
 * The two courses keep **separate progress**: their files are named `asm-c-mooc-progress-….json` and
   `asm-mooc-progress-….json`, and a file of one course cannot be loaded into the other.
 
@@ -63,6 +73,7 @@ src/js/cinterp.js      C interpreter (index.html only)
 src/js/util.js         helpers, highlighting, LaTeX rendering, progress storage
 src/js/dsl.js          the small language used to write the content
 src/js/exercises.js    exercise types and cards
+src/js/notes.js        notes on the course text (select text, Add note)
 src/js/app.js          pages, navigation, saving, self-test
 src/content/*.js       index.html: the course text and exercises, one file per part
 src/content-asm/*.js   assembly.html: the course text and exercises, one file per part
