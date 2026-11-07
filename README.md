@@ -16,6 +16,12 @@ Two offline, interactive courses for learning to program the PIC16F887 from zero
 That is all: each file contains everything (the course text, the fonts, KaTeX for the mathematics, the PIC16F887
 simulator and, in `index.html`, the C interpreter). No server, no account and no internet connection are needed.
 
+### The code editor
+
+* **Ctrl + /** (**⌘ + /** on a Mac) comments out the selected lines, or the current line, with `;` in assembly
+  and `//` in C; pressing it again on commented lines removes the comments. **Ctrl + Z** undoes it.
+* **Tab** and **Shift + Tab** indent and unindent the selected lines; **Ctrl + Enter** runs the tests.
+
 ### Notes
 
 * Select any text of a course: a small menu appears with **Add note**. Write your note and save it: the

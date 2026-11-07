@@ -358,8 +358,39 @@ function makeEditor(initial, lang, onSubmit) {
   ta.addEventListener('input', () => { errLine = 0; upd(); sync(); });
   ta.addEventListener('scroll', sync);
   const indentOf = (s) => /^[ \t]*/.exec(s)[0];
+  /* Ctrl+/ (Cmd+/ on a Mac): comment out the selected lines, or the current line, or uncomment them when
+     they are all comments already. The comment mark goes at the common indentation of the lines. */
+  const TOKEN = lang === 'asm' ? ';' : '//';
+  const COMMENTED = lang === 'asm' ? /^\s*;/ : /^\s*\/\//;
+  const UNCOMMENT = lang === 'asm' ? /^(\s*);[ ]?/ : /^(\s*)\/\/[ ]?/;
+  const toggleComment = () => {
+    const v = ta.value, s = ta.selectionStart, t = ta.selectionEnd;
+    const ls = v.lastIndexOf('\n', s - 1) + 1;
+    const last = t > s && v[t - 1] === '\n' ? t - 1 : t;   /* a selection ending at the start of a line leaves that line alone */
+    let le = v.indexOf('\n', last); if (le < 0) le = v.length;
+    const lines = v.slice(ls, le).split('\n');
+    const filled = lines.filter(l => l.trim());
+    const uncomment = filled.length > 0 && filled.every(l => COMMENTED.test(l));
+    const at = filled.length ? Math.min(...filled.map(l => indentOf(l).length)) : 0;
+    const out = lines.map(l => uncomment ? l.replace(UNCOMMENT, '$1') : (l.trim() || !filled.length ? l.slice(0, at) + TOKEN + ' ' + l.slice(at) : l));
+    const block = out.join('\n');
+    ta.focus();
+    ta.setSelectionRange(ls, le);
+    let ok = false;
+    try { ok = document.execCommand('insertText', false, block); } catch (err) { ok = false; }   /* keeps Ctrl+Z working */
+    if (!ok || ta.value !== v.slice(0, ls) + block + v.slice(le)) ta.value = v.slice(0, ls) + block + v.slice(le);
+    if (s === t) {   /* only the cursor: keep it at the same place in its line */
+      const col = s - ls;
+      let nc = col;
+      if (uncomment) { const m = UNCOMMENT.exec(lines[0]); const pos = m[1].length, cut = m[0].length - pos; nc = col <= pos ? col : Math.max(pos, col - cut); }
+      else if (col >= at) nc = col + TOKEN.length + 1;
+      ta.setSelectionRange(ls + nc, ls + nc);
+    } else ta.setSelectionRange(ls, ls + block.length);
+    errLine = 0; upd(); sync();
+  };
   ta.addEventListener('keydown', e => {
     const s = ta.selectionStart, t = ta.selectionEnd, v = ta.value;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide')) { e.preventDefault(); toggleComment(); return; }
     if (e.key === 'Tab') {
       e.preventDefault();
       const ls = v.lastIndexOf('\n', s - 1) + 1;
@@ -534,7 +565,8 @@ T.code = function (ex, ctx) {
   const stdinBox = hasStdin ? el('textarea', { class: 'stdin', rows: 3, spellcheck: 'false', 'aria-label': 'Input for the program' }) : null;
   if (stdinBox) stdinBox.value = tests()[0].stdin || '';
   if (ex.pre) out.append(el('div', { class: 'cap', text: 'Already written for you (read-only), placed before your code:' }), codeBlock(ex.pre, ex.lang));
-  out.append(ed.wrap);
+  const mod = /Mac|iPhone|iPad/.test(root.navigator.platform || '') ? '⌘' : 'Ctrl';
+  out.append(ed.wrap, el('div', { class: 'ed-keys', html: '<kbd>' + mod + '</kbd> + <kbd>/</kbd> comment out lines &nbsp;·&nbsp; <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> indent lines &nbsp;·&nbsp; <kbd>' + mod + '</kbd> + <kbd>Enter</kbd> run the tests' }));
   if (ex.post) out.append(el('div', { class: 'cap', text: 'Already written for you, placed after your code:' }), codeBlock(ex.post, ex.lang));
   if (stdinBox) out.append(el('details', { class: 'stdin-d' }, el('summary', { text: 'Input typed by the user when you press Run' }), stdinBox));
   const showErrors = (errs, kind) => {
