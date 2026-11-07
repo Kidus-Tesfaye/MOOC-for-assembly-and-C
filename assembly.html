@@ -7081,7 +7081,7 @@ $$-2^{n-1} \ldots 2^{n-1} - 1.$$
               }, R`<code>ANDLW 00001111B</code> keeps bits $0$ to $3$ and clears bits $4$ to $7$.`, { hint: R`Three instructions: <code>MOVF NUM, W</code>, <code>ANDLW 00001111B</code>, <code>MOVWF RESULT</code>.` }),
               D.asm('Set, clear and toggle', R`<p>The register <code>NUM</code> holds any value. Using one mask instruction each time, calculate:</p>
 <ul><li><code>SET_HI</code>: NUM with its four <b>highest</b> bits set to $1$ (the others unchanged),</li>
-<li><code>CLR_B0</code>: NUM with bit $0$ cleared (the lowest significant bit) to $0$ (the others unchanged),</li>
+<li><code>CLR_B0</code>: NUM with bit $0$ (the lowest significant bit) cleared to $0$ (the others unchanged),</li>
 <li><code>TOG_ALL</code>: NUM with <b>every</b> bit toggled.</li></ul>
 <p>Start each calculation with <code>MOVF NUM, W</code>. The tests put other values in NUM.</p>`, {
                 start: 'NUM     EQU 0x20\nSET_HI  EQU 0x21\nCLR_B0  EQU 0x22\nTOG_ALL EQU 0x23\n\n; write your instructions here\n\n        GOTO $\n',
