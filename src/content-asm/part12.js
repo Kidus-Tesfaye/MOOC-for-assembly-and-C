@@ -120,6 +120,23 @@ $$V_{\text{out}} = \frac{R_{2}}{R_{1} + R_{2}}\,V_{\text{in}} \quad\Rightarrow\q
           solution: 'MAIN:\n    CALL SETUP\nLOOP:\n    CALL READ_AN0\n    SUBLW 102           ; 102 - W: C = 0 if W > 102\n    BTFSS STATUS, 0\n    GOTO HOT\n    BCF  PORTD, 6       ; relay off\n    GOTO LOOP\nHOT:\n    BSF  PORTD, 6       ; relay on\n    GOTO LOOP\n'
         }, R`<code>SUBLW 102</code> calculates $102 - \text{ADRESH}$, with C $= 0$ exactly when ADRESH $> 102$. The tests $40\,^{\circ}\mathrm{C}$ (ADRESH $= 102$) and $41\,^{\circ}\mathrm{C}$ (ADRESH $= 104$) check the limit.`, { hint: [R`Compare W with $102$ using <code>SUBLW 102</code> (Part 4).`, R`C $= 0$ means hotter than the limit: <code>BSF PORTD, 6</code>; otherwise <code>BCF PORTD, 6</code>.`] })
       ]
+    },
+{
+      title: 'Challenge: a dimmer with a minimum',
+      objectives: ['You will connect the A/D converter and the PWM in one program'],
+      blocks: [
+        D.T(R`<p>A dimmer connects the two halves of this part: the A/D converter reads a potentiometer and the PWM sets the brightness of an LED. With PR2 $= 255$, the duty cycle is $\frac{\text{CCPR1L}}{256}$ (when the 2 low bits in CCP1CON are $0$), so the $8$ high bits of a left-justified conversion, ADRESH, can go straight into CCPR1L. Real dimmers often keep a minimum brightness, so that a lamp turned all the way down does not look broken.</p>`),
+        D.asm('A dimmer with a minimum', R`<p>Write the whole program. Set up the PWM on CCP1 (RC2) with PR2 $= 255$ and the Timer2 prescaler $16$, as in Activity 13, and the A/D converter on AN0 (ADCON1 can stay $0$: left justified). Then loop forever: convert AN0 and copy ADRESH into CCPR1L, but never less than $26$ (about $10\,\%$): if ADRESH is below $26$, use $26$.</p>`, {
+          start: 'LEVEL EQU 0x20\nA1    EQU 0x21\n\n; the setup\n\nLOOP:\n    ; read AN0, then set the brightness\n\n    GOTO LOOP\n',
+          tests: [
+            { name: R`$2.5\ \mathrm{V}$`, init: { analog: { 0: 2.5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 128, 'PWM1.ON': 1, 'PWM1.FREQ': [244, 244.3], TRISC2: 0 } },
+            { name: R`$1\ \mathrm{V}$`, init: { analog: { 0: 1 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 51, 'PWM1.ON': 1 } },
+            { name: R`$5\ \mathrm{V}$`, init: { analog: { 0: 5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 255 } },
+            { name: R`$0.2\ \mathrm{V}$: the minimum`, init: { analog: { 0: 0.2 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 26, 'PWM1.ON': 1 } },
+            { name: R`$1\ \mathrm{V}$, then $4\ \mathrm{V}$`, init: { analog: { 0: 1 } }, events: [{ step: 1500, analog: { 0: 4 } }], maxSteps: 3000, limitOk: true, expect: { CCPR1L: 204 } }],
+          solution: "LEVEL EQU 0x20\nA1    EQU 0x21\n\n    BANKSEL PR2\n    MOVLW   255\n    MOVWF   PR2         ; PWM period: 256 x 16 cycles\n    BCF     TRISC, 2    ; RC2 (CCP1) output\n    BANKSEL T2CON\n    MOVLW   00000111B\n    MOVWF   T2CON       ; Timer2 on, prescaler 16\n    MOVLW   00001100B\n    MOVWF   CCP1CON     ; CCP1 in PWM mode\n    MOVLW   01000001B\n    MOVWF   ADCON0      ; Fosc/8, AN0, converter on (ADCON1 = 0: left justified)\nLOOP:\n    MOVLW   5\n    MOVWF   A1\n    DECFSZ  A1, F       ; acquisition time\n    GOTO    $-1\n    BSF     ADCON0, 1   ; GO: start the conversion\n    BTFSC   ADCON0, 1   ; wait until it is finished\n    GOTO    $-1\n    MOVF    ADRESH, W\n    MOVWF   LEVEL\n    MOVLW   26\n    SUBWF   LEVEL, W    ; LEVEL - 26: C = 0 if LEVEL < 26\n    MOVLW   26\n    BTFSC   STATUS, 0\n    MOVF    LEVEL, W    ; LEVEL >= 26: keep it\n    MOVWF   CCPR1L      ; the brightness\n    GOTO    LOOP\n"
+        }, R`The setup comes from Activity 13 (PWM) and Activity 14 (A/D converter). In the loop, <code>SUBWF</code> compares the reading with $26$: C $= 0$ means it is smaller, and $26$ is used instead. $1\ \mathrm{V}$ gives about $\frac{1}{5} \times 1024 \approx 205$, so ADRESH $= 51$, a duty cycle of about $20\,\%$.`, { challenge: true, hint: [R`Setup: PR2 $= 255$ and TRISC2 $= 0$ (bank 1); T2CON $= 00000111_{2}$, CCP1CON $= 00001100_{2}$ and ADCON0 $= 01000001_{2}$ (bank 0).`, R`Loop: wait a few cycles (the acquisition time), <code>BSF ADCON0, 1</code> (GO), wait while it is $1$, then compare ADRESH with $26$ using <code>SUBWF</code> and copy the right value into CCPR1L.`] })
+      ]
     }
   ]
 });

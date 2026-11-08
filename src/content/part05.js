@@ -306,6 +306,20 @@ void main(void) {
         D.mc('Why _XTAL_FREQ?', 'Why must a C program define <code>_XTAL_FREQ</code> before using <code>__delay_ms</code>?', ['The macro converts milliseconds into instruction cycles, which depends on the oscillator frequency', 'It sets the oscillator of the chip to that frequency', 'It is only a comment', 'It enables the timers'], 0, 'The define only informs the compiler; the frequency itself is selected with OSCCON and the configuration bits.', { hint: 'Does #define change any register?' }),
         D.num('Period of 1 Hz', R`<p>An LED blinks at $2\ \mathrm{Hz}$ with equal on and off times. How long is it on, in milliseconds?</p>`, 250, R`$T = \frac{1}{2\ \mathrm{Hz}} = 500\ \mathrm{ms}$ and the LED is on for $\frac{T}{2} = 250\ \mathrm{ms}$.`, { unit: 'ms', hint: R`First find the period $T = \frac{1}{f}$.` })
       ]
+    },
+{
+      title: 'Challenge: prime numbers',
+      objectives: ['You will combine two nested loops, a flag and break'],
+      blocks: [
+        D.T(R`<p>A <b>prime number</b> has exactly two divisors, $1$ and itself: $2, 3, 5, 7, 11, \ldots$ To test whether $k$ is prime, try to divide it by $2, 3, 4, \ldots$: if a division leaves no remainder, $k$ is not prime. It is enough to try the divisors $d$ with $d \times d \leq k$, because if $k = d \times e$ with $d \leq e$, then $d \times d \leq k$. For $k = 97$ that is $8$ trials instead of $95$.</p>`),
+        D.c('Prime numbers', R`<p>Write a program which asks for a number N ($2 \leq N \leq 500$) and prints all prime numbers from $2$ to N on one line, each followed by a space, and then how many there are, exactly in the format shown.</p>`, {
+          start: START, sample: R`N: [[30]]
+2 3 5 7 11 13 17 19 23 29
+Primes: 10`,
+          tests: [30, 2, 10, 97, 100, 500].map(n => { const ps = []; for (let k = 2; k <= n; k++) { let p = true; for (let d = 2; d * d <= k; d++) if (k % d === 0) { p = false; break; } if (p) ps.push(k); } return { name: 'N = ' + n, stdin: n + '\n', out: 'N: ' + ps.join(' ') + '\nPrimes: ' + ps.length + '\n' }; }),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int n, k, d, prime, count = 0;\n    printf(\"N: \");\n    scanf(\"%d\", &n);\n    for (k = 2; k <= n; k++) {\n        prime = 1;\n        for (d = 2; d * d <= k; d++) {   // a divisor bigger than the square root has a partner below it\n            if (k % d == 0) {\n                prime = 0;\n                break;\n            }\n        }\n        if (prime) {\n            printf(\"%d \", k);\n            count++;\n        }\n    }\n    printf(\"\\nPrimes: %d\\n\", count);\n}\n"
+        }, R`Two nested loops: the outer one goes through the candidates $k$, the inner one through the divisors $d$. The flag <code>prime</code> starts at $1$ and becomes $0$ when a divisor is found, and <code>break</code> then stops the inner loop early. A counter adds one for every prime.`, { challenge: true, hint: [R`Outer loop <code>for (k = 2; k &lt;= n; k++)</code>. Inside it, set <code>prime = 1</code> and loop over the divisors <code>d</code>.`, R`Inner loop <code>for (d = 2; d * d &lt;= k; d++)</code>: if <code>k % d == 0</code>, set <code>prime = 0</code> and <code>break</code>. After it, if <code>prime</code> is still $1$, print <code>k</code> and count it.`] })
+      ]
     }
   ]
 });

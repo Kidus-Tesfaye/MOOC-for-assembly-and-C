@@ -171,7 +171,7 @@ $$-2^{n-1} \ldots 2^{n-1} - 1.$$
         }, R`<code>ANDLW 00001111B</code> keeps bits $0$ to $3$ and clears bits $4$ to $7$.`, { hint: R`Three instructions: <code>MOVF NUM, W</code>, <code>ANDLW 00001111B</code>, <code>MOVWF RESULT</code>.` }),
         D.asm('Set, clear and toggle', R`<p>The register <code>NUM</code> holds any value. Using one mask instruction each time, calculate:</p>
 <ul><li><code>SET_HI</code>: NUM with its four <b>highest</b> bits set to $1$ (the others unchanged),</li>
-<li><code>CLR_B0</code>: NUM with bit $0$ cleared to $0$ (the others unchanged),</li>
+<li><code>CLR_B0</code>: NUM with bit $0$ (the lowest significant bit) cleared to $0$ (the others unchanged),</li>
 <li><code>TOG_ALL</code>: NUM with <b>every</b> bit toggled.</li></ul>
 <p>Start each calculation with <code>MOVF NUM, W</code>. The tests put other values in NUM.</p>`, {
           start: 'NUM     EQU 0x20\nSET_HI  EQU 0x21\nCLR_B0  EQU 0x22\nTOG_ALL EQU 0x23\n\n; write your instructions here\n\n        GOTO $\n',
@@ -224,6 +224,21 @@ $$1010\,0001_{2} + 1101\,1100_{2} = 1\,0111\,1101_{2} \qquad (161 + 220 = 381)$$
           tests: [{ name: R`$\text{NUM} = 10$`, init: { NUM: 10 }, expect: { RESULT: 246 } }, { name: R`$\text{NUM} = 1$`, init: { NUM: 1 }, expect: { RESULT: 255 } }, { name: R`$\text{NUM} = 0$`, init: { NUM: 0 }, expect: { RESULT: 0 } }, { name: R`$\text{NUM} = 100$`, init: { NUM: 100 }, expect: { RESULT: 156 } }],
           solution: 'NUM    EQU 0x20\nRESULT EQU 0x21\n\n        COMF    NUM, W        ; W = NUM with every bit flipped\n        ADDLW   1             ; plus one: the two\'s complement\n        MOVWF   RESULT\n        GOTO    $\n'
         }, R`Flipping gives $255 - \text{NUM}$ and adding $1$ gives $256 - \text{NUM}$, the stored pattern of $-\text{NUM}$: $10$ becomes $246$, which reads as $-10$. For $\text{NUM} = 0$ the sum $255 + 1 = 256$ wraps to $0$, as it should.`, { hint: R`Three instructions: <code>COMF NUM, W</code>, <code>ADDLW 1</code>, <code>MOVWF RESULT</code>.` })
+      ]
+    },
+{
+      title: 'Challenge: subtract without subtracting',
+      objectives: ['You will use the two\'s complement to subtract with additions only'],
+      blocks: [
+        D.T(R`<p>The PIC subtracts by adding the two's complement (Section 5). This challenge asks you to do the same by hand: compute two differences using only <code>MOVF</code>, <code>COMF</code>, <code>ADDLW</code> and <code>MOVWF</code>, without <code>SUBLW</code> or <code>SUBWF</code>. Think about what $256 - k$ means for a byte, and what <code>COMF</code> gives you.</p>`),
+        D.asm('Subtract without subtracting', R`<p>NUM holds a value between $50$ and $200$. Without any subtraction instruction, calculate</p>
+<ul><li><code>RESULT</code> $= 200 - \text{NUM}$,</li><li><code>DIFF</code> $= \text{NUM} - 50$.</li></ul>
+<p>Use only <code>MOVF</code>, <code>COMF</code>, <code>ADDLW</code> and <code>MOVWF</code>. The tests put several values in NUM.</p>`, {
+          start: 'NUM    EQU 0x20\nRESULT EQU 0x21\nDIFF   EQU 0x22\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[120, 80, 70], [200, 0, 150], [50, 150, 0], [99, 101, 49], [173, 27, 123]].map(([n, r, d]) => ({ name: R`$\text{NUM} = ` + n + R`$`, init: { NUM: n }, expect: { RESULT: r, DIFF: d } })),
+          forbid: [{ re: /\bSUB(LW|WF)\b/i, msg: 'Do not use SUBLW or SUBWF: only additions are allowed.' }],
+          solution: 'NUM    EQU 0x20\nRESULT EQU 0x21\nDIFF   EQU 0x22\n\n    COMF  NUM, W      ; W = 255 - NUM\n    ADDLW 201         ; 255 - NUM + 201 = 456 - NUM, which is 200 - NUM in a byte\n    MOVWF RESULT\n    MOVF  NUM, W\n    ADDLW 206         ; NUM + 206 = NUM + (256 - 50), which is NUM - 50 in a byte\n    MOVWF DIFF\n    GOTO $\n'
+        }, R`In a byte, adding $256 - k$ is the same as subtracting $k$, because the extra $256$ is lost as a carry: $\text{NUM} - 50 = \text{NUM} + 206$. <code>COMF</code> gives $255 - \text{NUM}$, so $200 - \text{NUM} = (255 - \text{NUM}) + 201 - 256$, and the $256$ disappears again.`, { challenge: true, hint: [R`Adding $256 - 50 = 206$ to a byte subtracts $50$.`, R`<code>COMF NUM, W</code> puts $255 - \text{NUM}$ in W. Which number must you add to get $200 - \text{NUM}$, keeping only $8$ bits?`] })
       ]
     }
   ]

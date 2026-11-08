@@ -304,6 +304,30 @@ void main(void) {
         D.mc('Which is true?', 'Which statement matches the conclusions of Lecture 8?', ['In assembly you know exactly how long each instruction takes; in C you cannot predict the execution time exactly', 'C programs always run faster than assembly', 'In C you must select the RAM banks yourself', 'Assembly code is always placed by the compiler'], 0, 'C is easier, assembly gives direct control and exact timing.', { hint: 'Which language shows every instruction that is executed?' }),
         D.fill('The C template', 'Complete the skeleton of a C program for the PIC.', '#include <{{xc.h}}>\n#define {{_XTAL_FREQ}} 4000000\n\nvoid {{setup}}() {\n    OSCCON = 0b01100000;\n}\n\nvoid main(void) {\n    setup();\n    {{while}} (1) {\n    }\n}', 'xc.h gives the register names, _XTAL_FREQ the clock for the delays, setup configures the chip and while (1) repeats forever.', { lang: 'c', cs: true, hint: 'Look at the template above.' })
       ]
+    },
+{
+      title: 'Challenge: Euclid\'s algorithm',
+      objectives: ['You will write a function that uses another function', 'You will avoid an overflow with the order of the operations'],
+      blocks: [
+        D.T(R`<p>The <b>greatest common divisor</b> $\gcd(a, b)$ is the biggest number that divides both $a$ and $b$: $\gcd(12, 18) = 6$. Euclid described a fast way to find it more than $2000$ years ago: replace the pair $(a, b)$ by $(b, a \bmod b)$ until $b$ is $0$; then $a$ is the answer.</p>
+$$(18, 12) \to (12, 6) \to (6, 0) \qquad \Rightarrow \qquad \gcd(18, 12) = 6$$
+<p>The <b>least common multiple</b>, the smallest number that both $a$ and $b$ divide, follows from it: $\operatorname{lcm}(a, b) = \frac{a}{\gcd(a, b)} \times b$, for example $\operatorname{lcm}(4, 6) = \frac{4}{2} \times 6 = 12$.</p>`),
+        D.c('Euclid\'s algorithm', R`<p>Write two functions:</p>
+<ul><li><code>unsigned int gcd(unsigned int a, unsigned int b)</code> returns $\gcd(a, b)$, calculated with Euclid's method ($a$ and $b$ are never both $0$);</li>
+<li><code>unsigned long lcm(unsigned int a, unsigned int b)</code> returns $\operatorname{lcm}(a, b)$ for $a, b > 0$, using <code>gcd</code>.</li></ul>
+<p>Remember that an <code>int</code> has $16$ bits in XC8: $\operatorname{lcm}(1000, 999) = 999000$ does not fit in one.</p>`, {
+          start: R`unsigned int gcd(unsigned int a, unsigned int b) {
+
+}
+
+unsigned long lcm(unsigned int a, unsigned int b) {
+
+}
+`, tests: [{ call: 'gcd', args: [12, 18], ret: 6 }, { call: 'gcd', args: [17, 5], ret: 1 }, { call: 'gcd', args: [0, 7], ret: 7 }, { call: 'gcd', args: [100, 75], ret: 25 }, { call: 'gcd', args: [65535, 255], ret: 255 },
+            { call: 'lcm', args: [4, 6], ret: 12 }, { call: 'lcm', args: [21, 6], ret: 42 }, { call: 'lcm', args: [7, 7], ret: 7 }, { call: 'lcm', args: [1000, 999], ret: 999000 }, { call: 'lcm', args: [65535, 2], ret: 131070 }],
+          solution: "unsigned int gcd(unsigned int a, unsigned int b) {\n    unsigned int r;\n    while (b != 0) {\n        r = a % b;          // gcd(a, b) = gcd(b, a % b)\n        a = b;\n        b = r;\n    }\n    return a;\n}\n\nunsigned long lcm(unsigned int a, unsigned int b) {\n    return (unsigned long)(a / gcd(a, b)) * b;   // divide first, multiply in 32 bits\n}\n"
+        }, R`A number that divides $a$ and $b$ also divides $a \bmod b$, so every step keeps the same common divisors while the numbers get smaller; when the remainder is $0$, the other number is the gcd. In <code>lcm</code>, dividing first keeps the numbers small, and the cast to <code>unsigned long</code> makes the multiplication use $32$ bits. Without it, $999 \times 1000$ would be calculated in $16$ bits and wrap around.`, { challenge: true, hint: [R`gcd: <code>while (b != 0)</code>, calculate <code>r = a % b</code>, then <code>a = b</code> and <code>b = r</code>. After the loop, return <code>a</code>.`, R`lcm: divide <code>a</code> by <code>gcd(a, b)</code> first, then multiply by <code>b</code> in $32$ bits: cast one operand to <code>unsigned long</code> before the multiplication.`] })
+      ]
     }
   ]
 });

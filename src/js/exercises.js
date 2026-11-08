@@ -342,24 +342,69 @@ function makeEditor(initial, lang, onSubmit) {
   ta.value = initial || '';
   const hl = el('pre', { class: 'ed-hl', 'aria-hidden': 'true' }, el('code'));
   const gut = el('div', { class: 'ed-gutter', 'aria-hidden': 'true' });
-  const area = el('div', { class: 'ed-area' }, hl, ta);
+  const bar = el('div', { class: 'ed-cur', 'aria-hidden': 'true' });
+  const area = el('div', { class: 'ed-area' }, bar, hl, ta);
   const wrap = el('div', { class: 'editor lang-' + lang }, gut, area);
   let errLine = 0;
   const upd = () => {
     const text = ta.value;
     const lines = text.split('\n');
     hl.firstChild.innerHTML = highlight(text, lang).join('\n') + '\n';
-    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div' + (i === errLine ? ' class="err"' : '') + '>' + i + '</div>';
+    const cur = curLine();
+    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div class="' + (i === errLine ? 'err' : '') + (i === cur ? ' cur' : '') + '">' + i + '</div>';
     gut.innerHTML = s;
+    bar.style.top = (10 + (cur - 1) * 22) + 'px';
     const h = Math.max(8, lines.length + 1) * 22 + 20;
     area.style.height = h + 'px'; gut.style.height = h + 'px';
   };
   const sync = () => { hl.scrollLeft = ta.scrollLeft; hl.scrollTop = ta.scrollTop; };
+  const curLine = () => ta.value.slice(0, ta.selectionStart).split('\n').length;
+  let lastCur = 0;
+  const caret = () => {
+    const c = curLine();
+    if (c === lastCur) return;
+    lastCur = c;
+    Array.from(gut.children).forEach((d, i) => d.classList.toggle('cur', i + 1 === c));
+    bar.style.top = (10 + (c - 1) * 22) + 'px';
+  };
+  ['keyup', 'click', 'focus', 'select'].forEach(ev => ta.addEventListener(ev, caret));
+  document.addEventListener('selectionchange', () => { if (document.activeElement === ta) caret(); });
   ta.addEventListener('input', () => { errLine = 0; upd(); sync(); });
   ta.addEventListener('scroll', sync);
   const indentOf = (s) => /^[ \t]*/.exec(s)[0];
+  /* Ctrl+/ (Cmd+/ on a Mac): comment out the selected lines, or the current line, or uncomment them when
+     they are all comments already. The comment mark goes at the common indentation of the lines. */
+  const TOKEN = lang === 'asm' ? ';' : '//';
+  const COMMENTED = lang === 'asm' ? /^\s*;/ : /^\s*\/\//;
+  const UNCOMMENT = lang === 'asm' ? /^(\s*);[ ]?/ : /^(\s*)\/\/[ ]?/;
+  const toggleComment = () => {
+    const v = ta.value, s = ta.selectionStart, t = ta.selectionEnd;
+    const ls = v.lastIndexOf('\n', s - 1) + 1;
+    const last = t > s && v[t - 1] === '\n' ? t - 1 : t;   /* a selection ending at the start of a line leaves that line alone */
+    let le = v.indexOf('\n', last); if (le < 0) le = v.length;
+    const lines = v.slice(ls, le).split('\n');
+    const filled = lines.filter(l => l.trim());
+    const uncomment = filled.length > 0 && filled.every(l => COMMENTED.test(l));
+    const at = filled.length ? Math.min(...filled.map(l => indentOf(l).length)) : 0;
+    const out = lines.map(l => uncomment ? l.replace(UNCOMMENT, '$1') : (l.trim() || !filled.length ? l.slice(0, at) + TOKEN + ' ' + l.slice(at) : l));
+    const block = out.join('\n');
+    ta.focus();
+    ta.setSelectionRange(ls, le);
+    let ok = false;
+    try { ok = document.execCommand('insertText', false, block); } catch (err) { ok = false; }   /* keeps Ctrl+Z working */
+    if (!ok || ta.value !== v.slice(0, ls) + block + v.slice(le)) ta.value = v.slice(0, ls) + block + v.slice(le);
+    if (s === t) {   /* only the cursor: keep it at the same place in its line */
+      const col = s - ls;
+      let nc = col;
+      if (uncomment) { const m = UNCOMMENT.exec(lines[0]); const pos = m[1].length, cut = m[0].length - pos; nc = col <= pos ? col : Math.max(pos, col - cut); }
+      else if (col >= at) nc = col + TOKEN.length + 1;
+      ta.setSelectionRange(ls + nc, ls + nc);
+    } else ta.setSelectionRange(ls, ls + block.length);
+    errLine = 0; upd(); sync();
+  };
   ta.addEventListener('keydown', e => {
     const s = ta.selectionStart, t = ta.selectionEnd, v = ta.value;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === '/' || e.code === 'Slash' || e.code === 'NumpadDivide')) { e.preventDefault(); toggleComment(); return; }
     if (e.key === 'Tab') {
       e.preventDefault();
       const ls = v.lastIndexOf('\n', s - 1) + 1;
@@ -534,7 +579,8 @@ T.code = function (ex, ctx) {
   const stdinBox = hasStdin ? el('textarea', { class: 'stdin', rows: 3, spellcheck: 'false', 'aria-label': 'Input for the program' }) : null;
   if (stdinBox) stdinBox.value = tests()[0].stdin || '';
   if (ex.pre) out.append(el('div', { class: 'cap', text: 'Already written for you (read-only), placed before your code:' }), codeBlock(ex.pre, ex.lang));
-  out.append(ed.wrap);
+  const mod = /Mac|iPhone|iPad/.test(root.navigator.platform || '') ? '⌘' : 'Ctrl';
+  out.append(ed.wrap, el('div', { class: 'ed-keys', html: '<kbd>' + mod + '</kbd> + <kbd>/</kbd> comment out lines &nbsp;·&nbsp; <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> indent lines &nbsp;·&nbsp; <kbd>' + mod + '</kbd> + <kbd>Enter</kbd> run the tests' }));
   if (ex.post) out.append(el('div', { class: 'cap', text: 'Already written for you, placed after your code:' }), codeBlock(ex.post, ex.lang));
   if (stdinBox) out.append(el('details', { class: 'stdin-d' }, el('summary', { text: 'Input typed by the user when you press Run' }), stdinBox));
   const showErrors = (errs, kind) => {
@@ -633,7 +679,7 @@ function buildExercise(ex, hooks) {
   const hints = [].concat(ex.hint || []);
   let hintShown = 0;
   const isProg = ex.type === 'code';
-  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
+  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (ex.challenge ? ' challenge' : '') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
   const fb = el('div', { class: 'fb', 'aria-live': 'polite' });
   const hintBox = el('div', { class: 'fb hint' });
   const solBox = el('div', { class: 'fb sol' });
@@ -642,8 +688,8 @@ function buildExercise(ex, hooks) {
   ctx.check = () => doCheck();
   const pts = el('span', { class: 'pt-got', text: saved.done ? '1' : '0' });
   const head = el('div', { class: 'ex-head' },
-    el('span', { class: 'ex-ico', html: MOOC.ICON[isProg ? 'pencil' : 'quiz'] }),
-    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: isProg ? 'Programming exercise · ' + (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz' }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
+    el('span', { class: 'ex-ico', html: MOOC.ICON[ex.challenge ? 'star' : (isProg ? 'pencil' : 'quiz')] }),
+    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: (ex.challenge ? 'Challenge · ' : (isProg ? 'Programming exercise · ' : '')) + (isProg ? (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz') }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
     el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
   const body = el('div', { class: 'ex-body' });
   body.append(el('div', { class: 'q', html: ex.q }));

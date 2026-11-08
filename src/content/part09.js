@@ -305,6 +305,20 @@ LOOP:
           solution: '    CLRF SUM\n    MOVLW 0x30\n    MOVWF FSR\n    MOVLW 8\n    MOVWF COUNT\nLOOP:\n    MOVF INDF, W\n    ADDWF SUM, F\n    INCF FSR, F\n    DECFSZ COUNT, F\n    GOTO LOOP\n    GOTO $'
         }, 'Each round reads the byte FSR points to with MOVF INDF, W, adds it to SUM and moves FSR forward.', { hint: 'MOVF INDF, W reads the current element; ADDWF SUM, F adds it.' })
       ]
+    },
+{
+      title: 'Challenge: run-length encoding',
+      objectives: ['You will walk through a string with pointers and write another string'],
+      blocks: [
+        D.T(R`<p><b>Run-length encoding</b> is one of the simplest ways to compress data: each run of equal characters is replaced by the character and the length of the run. <code>aaabccdddd</code> becomes <code>a3b1c2d4</code>: $10$ characters become $8$. It works well for data with long runs, such as simple black-and-white images, or the readings of a sensor that changes slowly.</p>`),
+        D.c('Run-length encoding', R`<p>Write a function <code>void rle(char *in, char *out)</code> which writes the run-length code of the string <code>in</code> into <code>out</code>, as a string. Each run gives its character followed by its length in decimal. Runs are at most $99$ characters long, so the length has one or two digits. <code>out</code> is big enough.</p>`, {
+          start: R`void rle(char *in, char *out) {
+
+}
+`, tests: [['aaabccdddd', 'a3b1c2d4'], ['abc', 'a1b1c1'], ['zzzzzzzzzzzz', 'z12'], ['HCT  Dubai', 'H1C1T1 2D1u1b1a1i1'], ['1112', '1321'], ['x'.repeat(25) + 'y', 'x25y1'], ['', '']].map(([s, code]) => ({ name: '"' + s + '"', call: 'rle', args: [s, ' '.repeat(40)], strings: [null, code] })),
+          solution: "void rle(char *in, char *out) {\n    char c;\n    unsigned char n;\n    while (*in != '\\0') {\n        c = *in;\n        n = 0;\n        while (*in == c) {          // count the run\n            n++;\n            in++;\n        }\n        *out++ = c;\n        if (n >= 10) {\n            *out++ = '0' + n / 10;\n        }\n        *out++ = '0' + n % 10;\n    }\n    *out = '\\0';\n}\n"
+        }, R`The outer loop starts a new run at every new character; the inner loop counts how long the run lasts and moves <code>in</code> past it. A length of $10$ or more needs two digits, <code>'0' + n / 10</code> and then <code>'0' + n % 10</code>. The final <code>'\0'</code> ends the output string.`, { challenge: true, hint: [R`Loop while <code>*in != '\0'</code>: remember the character <code>c = *in</code>, then count it with an inner loop <code>while (*in == c)</code> that also moves <code>in</code> forward.`, R`Write <code>c</code>, then the digits of the count: <code>'0' + n / 10</code> only if the count is at least $10$, then <code>'0' + n % 10</code>. Finish with <code>*out = '\0';</code>`] })
+      ]
     }
   ]
 });

@@ -171,7 +171,7 @@ function renderBlock(b, hooks) {
     case 'fig': return el('figure', { class: 'fig' }, el('div', { html: b.html }), b.cap ? el('figcaption', { class: 'cap', html: b.cap }) : null);
     case 'example': return el('div', { class: 'example' },
       el('div', { class: 'example-h' }, el('span', { class: 'ex-tag', text: 'Example' }), el('span', { html: b.title })),
-      codeBlock(b.text, b.lang, { lines: b.lineNumbers !== false && b.text.split('\n').length > 3 }),
+      codeBlock(b.text, b.lang, { lines: b.lineNumbers === false ? false : undefined }),
       b.lines.length ? el('table', { class: 'explain' }, b.lines.map(l => el('tr', {}, el('td', { class: 'm' }, el('code', { text: l[0] })), el('td', { html: l[1] })))) : null,
       b.result ? el('div', { class: 'example-r', html: b.result }) : null);
     case 'side': return el('div', { class: 'side' },
@@ -221,7 +221,7 @@ function renderHome() {
       el('p', { class: 'hero-next' }, t.done ? 'Next: ' : 'First: ', el('a', { href: secHref(tg.p, tg.s), text: 'Part ' + tg.p.num + ', ' + tg.s.num + '. ' + tg.s.title }))),
     CFG.heroCode ? el('div', { class: 'hero-r', 'aria-hidden': 'true' }, el('div', { class: 'hero-card' },
       el('div', { class: 'hero-card-h' }, el('i', {}), el('i', {}), el('i', {}), el('span', { text: CFG.heroCode.title })),
-      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '' }))) : null));
+      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '', lines: false }))) : null));
   const art = el('article', { class: 'content' });
   art.append(el('h1', { text: 'About this course' }));
   (home ? home.blocks : []).forEach(b => art.append(renderBlock(b, { onChange })));
@@ -252,7 +252,7 @@ function renderPart(p) {
   art.append(el('div', { class: 'paper pis' }, el('div', { class: 'pis-t', text: 'In this part' }), el('ol', { class: 'pis-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', {}, el('a', { href: secHref(p, s) }, el('span', { class: 'pis-n', text: s.num }), el('span', { class: 'pis-x', text: s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + ' / ' + st.total }) : null)); }))));
   const exs = partExs(p);
   const det = el('details', { class: 'paper acc' }, el('summary', {}, el('span', { text: 'List of exercises in this part' }), el('span', { class: 'acc-ico', html: ICON.chevron })),
-    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
+    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
   art.append(det);
   return art;
 }
@@ -310,7 +310,7 @@ function renderAllExercises() {
     art.append(el('h2', { class: 'sec-h' }, el('a', { href: '#/' + p.slug, text: 'Part ' + p.num + ': ' }), el('span', { html: p.title }), el('small', { class: 'h-count', text: '  ' + st.done + ' / ' + st.total })));
     p.sections.forEach(s => {
       if (!s.exs.length) return;
-      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
+      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
     });
   });
   return art;

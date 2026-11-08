@@ -4,8 +4,8 @@ Two offline, interactive courses for learning to program the PIC16F887 from zero
 
 | File | Course | Contents |
 |---|---|---|
-| **`index.html`** | Assembly and C Programming MOOC | C and assembly side by side: 14 parts, 319 exercises |
-| **`assembly.html`** | Assembly Programming MOOC | assembly only, with exam-style practice: 14 parts, 343 exercises |
+| **`index.html`** | Assembly and C Programming MOOC | C and assembly side by side: 14 parts, 333 exercises |
+| **`assembly.html`** | Assembly Programming MOOC | assembly only, with exam-style practice: 14 parts, 357 exercises |
 
 ## Using the courses
 
@@ -15,6 +15,14 @@ Two offline, interactive courses for learning to program the PIC16F887 from zero
 
 That is all: each file contains everything (the course text, the fonts, KaTeX for the mathematics, the PIC16F887
 simulator and, in `index.html`, the C interpreter). No server, no account and no internet connection are needed.
+
+### The code editor
+
+* Code has **line numbers** in the margin, as in VS Code, both in the editor and in the examples; the editor
+  also highlights the line of the cursor. The numbers are not copied when you copy code.
+* **Ctrl + /** (**⌘ + /** on a Mac) comments out the selected lines, or the current line, with `;` in assembly
+  and `//` in C; pressing it again on commented lines removes the comments. **Ctrl + Z** undoes it.
+* **Tab** and **Shift + Tab** indent and unindent the selected lines; **Ctrl + Enter** runs the tests.
 
 ### Notes
 
@@ -43,11 +51,15 @@ simulator and, in `index.html`, the C interpreter). No server, no account and no
 
 | | Assembly and C (`index.html`) | Assembly (`assembly.html`) |
 |---|---|---|
-| Parts and sections | 14 parts, 55 sections | 14 parts, 53 sections |
-| Exercises | 319: 91 in C, 48 in assembly, 180 quizzes | 343: 106 in assembly, 237 quizzes |
+| Parts and sections | 14 parts, 69 sections | 14 parts, 67 sections |
+| Exercises | 333: 97 in C, 56 in assembly, 180 quizzes | 357: 120 in assembly, 237 quizzes |
 | Organisation | parts 1–7 introduction, parts 8–14 advanced course | parts 1–7 introduction, parts 8–14 advanced course |
 | Extras | C interpreter with the rules of XC8 | a part on the 35 instructions, their flags, cycles and machine code; tracing and calculation practice for exams |
 
+* **Challenges:** every part ends with a challenge, a harder programming exercise on a gold card with a star.
+  Some go beyond the lecture slides: multiplication by shift and add, bubble sort, parity without a loop,
+  Euclid's algorithm, an overflow-free average, run-length encoding, measuring a pulse with Timer1, and an
+  ISR that serves two interrupt sources. In *All exercises* they are tagged **challenge**.
 * **PIC16F887 simulator:** all 35 instructions with exact cycle counts, RAM banks, indirect addressing,
   ports with TRIS/ANSEL, Timer0/1/2, PWM, A/D converter, USART, RB0 interrupt and an HD44780 LCD.
 * **C interpreter** (`index.html`): 8-bit unsigned `char`, 16-bit `int`, 24-bit `short long`, 32-bit
