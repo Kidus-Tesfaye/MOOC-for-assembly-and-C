@@ -1,7 +1,7 @@
 # Curriculum: Assembly and C Programming (PIC16F887)
 
 Goal: become a confident programmer in **C** and **assembly**, starting from zero.
-The examples follow the ELE3614 lectures (Nabil Karami) and the lab activities, but every
+The examples follow the ELE3614 lectures and the lab activities, but every
 page is organised around a *programming* idea; hardware is introduced only when the code needs it.
 Every concept is shown in C and in assembly side by side.
 
