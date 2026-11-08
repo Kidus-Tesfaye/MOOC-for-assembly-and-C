@@ -171,7 +171,7 @@ function renderBlock(b, hooks) {
     case 'fig': return el('figure', { class: 'fig' }, el('div', { html: b.html }), b.cap ? el('figcaption', { class: 'cap', html: b.cap }) : null);
     case 'example': return el('div', { class: 'example' },
       el('div', { class: 'example-h' }, el('span', { class: 'ex-tag', text: 'Example' }), el('span', { html: b.title })),
-      codeBlock(b.text, b.lang, { lines: b.lineNumbers !== false && b.text.split('\n').length > 3 }),
+      codeBlock(b.text, b.lang, { lines: b.lineNumbers === false ? false : undefined }),
       b.lines.length ? el('table', { class: 'explain' }, b.lines.map(l => el('tr', {}, el('td', { class: 'm' }, el('code', { text: l[0] })), el('td', { html: l[1] })))) : null,
       b.result ? el('div', { class: 'example-r', html: b.result }) : null);
     case 'side': return el('div', { class: 'side' },
@@ -221,7 +221,7 @@ function renderHome() {
       el('p', { class: 'hero-next' }, t.done ? 'Next: ' : 'First: ', el('a', { href: secHref(tg.p, tg.s), text: 'Part ' + tg.p.num + ', ' + tg.s.num + '. ' + tg.s.title }))),
     CFG.heroCode ? el('div', { class: 'hero-r', 'aria-hidden': 'true' }, el('div', { class: 'hero-card' },
       el('div', { class: 'hero-card-h' }, el('i', {}), el('i', {}), el('i', {}), el('span', { text: CFG.heroCode.title })),
-      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '' }))) : null));
+      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '', lines: false }))) : null));
   const art = el('article', { class: 'content' });
   art.append(el('h1', { text: 'About this course' }));
   (home ? home.blocks : []).forEach(b => art.append(renderBlock(b, { onChange })));

@@ -35,6 +35,7 @@
   --warn:#b54708; --warn-soft:#fffaeb; --warn-line:#fedf89; --info:#175cd3; --info-soft:#eff8ff; --info-line:#b2ddff;
   --surface:#fff; --surface-2:#f9fafb; --surface-3:#fcfcfd; --code-bg:#f2f4f7; --input-line:#d0d5dd; --topbar-bg:rgba(246,247,251,.88);
   --ok-ink:#05603a; --bad-ink:#912018; --warn-ink:#7a2e0e; --info-ink:#194185;
+  --code-gutter:#f3f5f8; --ln:#98a2b3;
   --r:14px;
   --sh1:0 1px 2px rgba(16,24,40,.05);
   --sh2:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);
@@ -176,7 +177,9 @@ code,kbd{font-family:var(--mono);font-size:.88em;color:var(--ink);background:var
 .code-wrap[data-lang]::after{content:attr(data-lang);position:absolute;top:-9px;right:14px;font:700 10px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 8px;pointer-events:none}
 pre.code{margin:0;background:var(--surface-3);border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;font:14.5px/1.7 var(--mono);color:var(--text);tab-size:4;white-space:pre;text-align:left}
 pre.code code{background:none;border:0;padding:0;border-radius:0;font:inherit;color:inherit}
-pre.code .ln{display:inline-block;width:2em;margin-right:14px;text-align:right;color:#98a2b3;user-select:none}
+pre.code .ln{display:inline-block;width:2em;margin-right:14px;text-align:right;color:var(--ln);user-select:none;-webkit-user-select:none}
+.code-wrap>pre.code.numbered{padding-left:0;background-image:linear-gradient(to right,var(--code-gutter) var(--gw),var(--line) var(--gw),var(--line) calc(var(--gw) + 1px),transparent calc(var(--gw) + 1px))}
+pre.code.numbered .ln{position:sticky;left:0;z-index:1;box-sizing:border-box;width:var(--gw);vertical-align:top;padding-right:12px;margin-right:16px;background:var(--code-gutter);box-shadow:inset -1px 0 0 var(--line)}
 .tk-kw{color:#6d28d9}.tk-dir{color:#c026d3}.tk-fn{color:#1d4ed8}.tk-num{color:#b45309}.tk-str{color:#15803d}.tk-sfr{color:#0e7490}.tk-com{color:#667085;font-style:italic}.tk-pun,.tk-op{color:#475467}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0 28px}
 .side .code-wrap{margin:0}
@@ -234,7 +237,7 @@ pre.code .ln{display:inline-block;width:2em;margin-right:14px;text-align:right;c
 .example-h{display:flex;align-items:center;gap:10px;font:600 15px/1.4 var(--sans);margin:0 0 6px;color:var(--ink)}
 .ex-tag{background:var(--accent-soft);color:var(--accent-ink);border:1px solid var(--accent-line);border-radius:999px;padding:2px 10px;font:700 10.5px/1.5 var(--sans);text-transform:uppercase;letter-spacing:.08em}
 .example .code-wrap{margin:14px 0 12px}
-.example pre.code{background:var(--surface-3)}
+
 .explain{border-collapse:collapse;width:100%;margin:0 0 12px;font:14.5px/1.55 var(--sans)}
 .explain td{padding:6px 8px;border-top:1px solid var(--line-2);vertical-align:top}
 .explain td.m{width:1%;white-space:nowrap}
@@ -338,6 +341,9 @@ table.trace input.bad{border-color:var(--bad);background:var(--bad-soft)}
 .ed-gutter{flex:0 0 auto;min-width:46px;padding:10px 8px 10px 6px;background:var(--surface-2);color:#98a2b3;text-align:right;user-select:none;border-right:1px solid var(--line);overflow:hidden}
 .ed-gutter div{height:22px}
 .ed-gutter .err{background:var(--bad-soft);color:var(--bad);font-weight:700;border-radius:3px}
+.editor:focus-within .ed-gutter .cur{color:var(--ink);font-weight:700}
+.ed-cur{position:absolute;left:0;right:0;top:10px;height:22px;background:var(--accent-soft);opacity:0;pointer-events:none}
+.editor:focus-within .ed-cur{opacity:.7}
 .ed-area{position:relative;flex:1;min-width:0}
 .ed-hl,.ed-area textarea{position:absolute;inset:0;margin:0;padding:10px 12px;font:inherit;line-height:22px;white-space:pre;tab-size:4;border:0;letter-spacing:0;word-wrap:normal;overflow-wrap:normal}
 .ed-hl{overflow:hidden;pointer-events:none;color:var(--text);background:transparent}
@@ -535,7 +541,7 @@ h1 .note-ico,.sec-h .note-ico{top:-.55em}
 html[data-mode=dark]{
   color-scheme:dark;
   --bg:#0b1120; --ink:#e6e9f0; --text:#cfd6e4; --muted:#98a2b3; --line:#2a3347; --line-2:#1a2132;
-  --surface:#121a2b; --surface-2:#172033; --surface-3:#141c2e; --code-bg:#1d2638; --input-line:#3a455c; --topbar-bg:rgba(11,17,32,.85);
+  --surface:#121a2b; --surface-2:#172033; --surface-3:#141c2e; --code-gutter:#0f1626; --ln:#5d6b82; --code-bg:#1d2638; --input-line:#3a455c; --topbar-bg:rgba(11,17,32,.85);
   --accent:#818cf8; --accent-ink:#c7d2fe; --accent-soft:#1e1b4b; --accent-line:#3730a3;
   --quiz:#2dd4bf; --quiz-ink:#99f6e4; --quiz-soft:#0d2a2a; --quiz-line:#115e59;
   --ok:#4ade80; --ok-soft:#0f2a1c; --ok-line:#166534; --ok-ink:#bbf7d0;
@@ -1488,9 +1494,12 @@ function codeBlock(text, lang, opts) {
   opts = opts || {};
   const lines = highlight(String(text).replace(/\n+$/, ''), lang);
   const start = opts.start || 1;
-  const html = lines.map((l, i) => (opts.lines ? '<span class="ln">' + (start + i) + '</span>' : '') + l).join('\n');
+  /* line numbers in a gutter, as in VS Code: on by default for assembly and C, off for plain text */
+  const numbered = opts.lines !== undefined ? !!opts.lines : (lang === 'asm' || lang === 'c');
+  const digits = Math.max(2, String(start + lines.length - 1).length);
+  const html = lines.map((l, i) => (numbered ? '<span class="ln">' + (start + i) + '</span>' : '') + l).join('\n');
   const label = opts.label !== undefined ? opts.label : ({ asm: 'Assembly', c: 'C' }[lang] || '');
-  return el('div', { class: 'code-wrap', 'data-lang': label || null }, el('pre', { class: 'code lang-' + (lang || 'text') }, el('code', { html })));
+  return el('div', { class: 'code-wrap', 'data-lang': label || null }, el('pre', { class: 'code lang-' + (lang || 'text') + (numbered ? ' numbered' : ''), style: numbered ? '--gw:calc(' + digits + 'ch + 26px)' : null }, el('code', { html })));
 }
 
 /* ---------- LaTeX: $...$ inline and $$...$$ display, rendered with KaTeX ---------- */
@@ -2052,19 +2061,33 @@ function makeEditor(initial, lang, onSubmit) {
   ta.value = initial || '';
   const hl = el('pre', { class: 'ed-hl', 'aria-hidden': 'true' }, el('code'));
   const gut = el('div', { class: 'ed-gutter', 'aria-hidden': 'true' });
-  const area = el('div', { class: 'ed-area' }, hl, ta);
+  const bar = el('div', { class: 'ed-cur', 'aria-hidden': 'true' });
+  const area = el('div', { class: 'ed-area' }, bar, hl, ta);
   const wrap = el('div', { class: 'editor lang-' + lang }, gut, area);
   let errLine = 0;
   const upd = () => {
     const text = ta.value;
     const lines = text.split('\n');
     hl.firstChild.innerHTML = highlight(text, lang).join('\n') + '\n';
-    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div' + (i === errLine ? ' class="err"' : '') + '>' + i + '</div>';
+    const cur = curLine();
+    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div class="' + (i === errLine ? 'err' : '') + (i === cur ? ' cur' : '') + '">' + i + '</div>';
     gut.innerHTML = s;
+    bar.style.top = (10 + (cur - 1) * 22) + 'px';
     const h = Math.max(8, lines.length + 1) * 22 + 20;
     area.style.height = h + 'px'; gut.style.height = h + 'px';
   };
   const sync = () => { hl.scrollLeft = ta.scrollLeft; hl.scrollTop = ta.scrollTop; };
+  const curLine = () => ta.value.slice(0, ta.selectionStart).split('\n').length;
+  let lastCur = 0;
+  const caret = () => {
+    const c = curLine();
+    if (c === lastCur) return;
+    lastCur = c;
+    Array.from(gut.children).forEach((d, i) => d.classList.toggle('cur', i + 1 === c));
+    bar.style.top = (10 + (c - 1) * 22) + 'px';
+  };
+  ['keyup', 'click', 'focus', 'select'].forEach(ev => ta.addEventListener(ev, caret));
+  document.addEventListener('selectionchange', () => { if (document.activeElement === ta) caret(); });
   ta.addEventListener('input', () => { errLine = 0; upd(); sync(); });
   ta.addEventListener('scroll', sync);
   const indentOf = (s) => /^[ \t]*/.exec(s)[0];
@@ -5211,7 +5234,7 @@ function renderBlock(b, hooks) {
     case 'fig': return el('figure', { class: 'fig' }, el('div', { html: b.html }), b.cap ? el('figcaption', { class: 'cap', html: b.cap }) : null);
     case 'example': return el('div', { class: 'example' },
       el('div', { class: 'example-h' }, el('span', { class: 'ex-tag', text: 'Example' }), el('span', { html: b.title })),
-      codeBlock(b.text, b.lang, { lines: b.lineNumbers !== false && b.text.split('\n').length > 3 }),
+      codeBlock(b.text, b.lang, { lines: b.lineNumbers === false ? false : undefined }),
       b.lines.length ? el('table', { class: 'explain' }, b.lines.map(l => el('tr', {}, el('td', { class: 'm' }, el('code', { text: l[0] })), el('td', { html: l[1] })))) : null,
       b.result ? el('div', { class: 'example-r', html: b.result }) : null);
     case 'side': return el('div', { class: 'side' },
@@ -5261,7 +5284,7 @@ function renderHome() {
       el('p', { class: 'hero-next' }, t.done ? 'Next: ' : 'First: ', el('a', { href: secHref(tg.p, tg.s), text: 'Part ' + tg.p.num + ', ' + tg.s.num + '. ' + tg.s.title }))),
     CFG.heroCode ? el('div', { class: 'hero-r', 'aria-hidden': 'true' }, el('div', { class: 'hero-card' },
       el('div', { class: 'hero-card-h' }, el('i', {}), el('i', {}), el('i', {}), el('span', { text: CFG.heroCode.title })),
-      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '' }))) : null));
+      codeBlock(CFG.heroCode.text, CFG.heroCode.lang, { label: '', lines: false }))) : null));
   const art = el('article', { class: 'content' });
   art.append(el('h1', { text: 'About this course' }));
   (home ? home.blocks : []).forEach(b => art.append(renderBlock(b, { onChange })));

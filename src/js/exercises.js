@@ -342,19 +342,33 @@ function makeEditor(initial, lang, onSubmit) {
   ta.value = initial || '';
   const hl = el('pre', { class: 'ed-hl', 'aria-hidden': 'true' }, el('code'));
   const gut = el('div', { class: 'ed-gutter', 'aria-hidden': 'true' });
-  const area = el('div', { class: 'ed-area' }, hl, ta);
+  const bar = el('div', { class: 'ed-cur', 'aria-hidden': 'true' });
+  const area = el('div', { class: 'ed-area' }, bar, hl, ta);
   const wrap = el('div', { class: 'editor lang-' + lang }, gut, area);
   let errLine = 0;
   const upd = () => {
     const text = ta.value;
     const lines = text.split('\n');
     hl.firstChild.innerHTML = highlight(text, lang).join('\n') + '\n';
-    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div' + (i === errLine ? ' class="err"' : '') + '>' + i + '</div>';
+    const cur = curLine();
+    let s = ''; for (let i = 1; i <= lines.length; i++) s += '<div class="' + (i === errLine ? 'err' : '') + (i === cur ? ' cur' : '') + '">' + i + '</div>';
     gut.innerHTML = s;
+    bar.style.top = (10 + (cur - 1) * 22) + 'px';
     const h = Math.max(8, lines.length + 1) * 22 + 20;
     area.style.height = h + 'px'; gut.style.height = h + 'px';
   };
   const sync = () => { hl.scrollLeft = ta.scrollLeft; hl.scrollTop = ta.scrollTop; };
+  const curLine = () => ta.value.slice(0, ta.selectionStart).split('\n').length;
+  let lastCur = 0;
+  const caret = () => {
+    const c = curLine();
+    if (c === lastCur) return;
+    lastCur = c;
+    Array.from(gut.children).forEach((d, i) => d.classList.toggle('cur', i + 1 === c));
+    bar.style.top = (10 + (c - 1) * 22) + 'px';
+  };
+  ['keyup', 'click', 'focus', 'select'].forEach(ev => ta.addEventListener(ev, caret));
+  document.addEventListener('selectionchange', () => { if (document.activeElement === ta) caret(); });
   ta.addEventListener('input', () => { errLine = 0; upd(); sync(); });
   ta.addEventListener('scroll', sync);
   const indentOf = (s) => /^[ \t]*/.exec(s)[0];

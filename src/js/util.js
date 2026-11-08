@@ -126,9 +126,12 @@ function codeBlock(text, lang, opts) {
   opts = opts || {};
   const lines = highlight(String(text).replace(/\n+$/, ''), lang);
   const start = opts.start || 1;
-  const html = lines.map((l, i) => (opts.lines ? '<span class="ln">' + (start + i) + '</span>' : '') + l).join('\n');
+  /* line numbers in a gutter, as in VS Code: on by default for assembly and C, off for plain text */
+  const numbered = opts.lines !== undefined ? !!opts.lines : (lang === 'asm' || lang === 'c');
+  const digits = Math.max(2, String(start + lines.length - 1).length);
+  const html = lines.map((l, i) => (numbered ? '<span class="ln">' + (start + i) + '</span>' : '') + l).join('\n');
   const label = opts.label !== undefined ? opts.label : ({ asm: 'Assembly', c: 'C' }[lang] || '');
-  return el('div', { class: 'code-wrap', 'data-lang': label || null }, el('pre', { class: 'code lang-' + (lang || 'text') }, el('code', { html })));
+  return el('div', { class: 'code-wrap', 'data-lang': label || null }, el('pre', { class: 'code lang-' + (lang || 'text') + (numbered ? ' numbered' : ''), style: numbered ? '--gw:calc(' + digits + 'ch + 26px)' : null }, el('code', { html })));
 }
 
 /* ---------- LaTeX: $...$ inline and $$...$$ display, rendered with KaTeX ---------- */
