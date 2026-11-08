@@ -128,6 +128,20 @@ D.part({
         D.num('ASCII of a digit', R`<p>What is the ASCII code (decimal) of the character <code>'7'</code>?</p>`, 55, R`$48 + 7 = 55$.`, { hint: R`<code>'0'</code> is $48$.` }),
         D.num('BCD in hexadecimal', R`<p>The value $83$ is stored in packed BCD. What does the register hold, written in hexadecimal?</p>`, ['83'], R`Tens $8 = 1000_{2}$ in the high nibble and units $3 = 0011_{2}$ in the low nibble: $1000\,0011_{2} = 83_{16}$ (which is $131$ in decimal).`, { kind: 'hex', hint: 'One digit per nibble.' })
       ]
+    },
+{
+      title: 'Challenge: multiplication in eight rounds',
+      objectives: ['You will multiply two bytes by shift and add, as fast as the PIC allows'],
+      blocks: [
+        D.T(R`<p>Repeated addition needs up to $255$ rounds. Long multiplication in binary needs only $8$, one for each bit of the multiplier: for every bit of Y that is $1$, add X shifted to the position of that bit. For $13 \times 11$, $11 = 1011_{2}$, so</p>
+$$13 \times 11 = 13 \times 8 + 13 \times 2 + 13 \times 1 = 104 + 26 + 13 = 143.$$
+<p>On the PIC the shifting is done with <code>RRF</code> or <code>RLF</code> on a 16-bit value, and the carry links the two bytes. There are several ways to arrange the rounds; the hints show a short one.</p>`),
+        D.asm('Multiplication in eight rounds', R`<p>Calculate the 16-bit product PH:PL $= \text{X} \times \text{Y}$ of any two bytes by shift and add: one round per bit of Y, $8$ rounds in all. The program must finish in at most $200$ instruction cycles (repeated addition needs about $1800$ for $255 \times 255$). X and Y may be changed; COUNT and TEMP are free.</p>`, {
+          start: 'X     EQU 0x20\nY     EQU 0x21\nPH    EQU 0x22\nPL    EQU 0x23\nCOUNT EQU 0x24\nTEMP  EQU 0x25\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[255, 255], [200, 100], [100, 200], [13, 11], [0, 77], [77, 0], [1, 1], [128, 2]].map(([x, y]) => ({ name: R`$` + x + R` \times ` + y + R`$`, init: { X: x, Y: y, PH: 0xA5, PL: 0x5A, C: 1 }, expect: { PH: (x * y) >> 8, PL: (x * y) & 255 }, check: (r) => r.get('CYCLES') <= 200 ? null : 'the program took ' + r.get('CYCLES') + ' cycles, but at most 200 are allowed: use one round per bit of Y.' })),
+          solution: "X     EQU 0x20\nY     EQU 0x21\nPH    EQU 0x22\nPL    EQU 0x23\nCOUNT EQU 0x24\nTEMP  EQU 0x25\n\n    CLRF  PH\n    CLRF  PL\n    MOVLW 8\n    MOVWF COUNT         ; one round per bit of Y\nLOOP:\n    RRF   Y, F          ; the next bit of Y falls into the carry\n    BTFSS STATUS, 0\n    GOTO  SHIFT         ; bit = 0: no addition (and C = 0)\n    MOVF  X, W\n    ADDWF PH, F         ; add X at the top: the carry is the 9th bit\nSHIFT:\n    RRF   PH, F         ; shift PH:PL right, the carry enters at the top\n    RRF   PL, F\n    DECFSZ COUNT, F\n    GOTO  LOOP\n    GOTO  $\n"
+        }, R`Each round takes one bit of Y, from bit 0. When the bit is $1$, X is added to PH; then PH:PL is shifted one place right, carry first, so every earlier addition moves one place further down. After $8$ rounds the addition made for bit $k$ has moved to the position $2^{k}$. When the bit is $0$ the carry is already $0$, so the shift brings in a $0$. The model solution needs about $80$ cycles for any two numbers.`, { challenge: true, hint: [R`Take the bits of Y one at a time with <code>RRF Y, F</code>: the bit falls into the carry. <code>BTFSS STATUS, 0</code> skips the addition when it is $0$.`, R`Add X to the <b>high</b> byte (<code>MOVF X, W</code>, <code>ADDWF PH, F</code>): the carry of this addition is the 9th bit. Then <code>RRF PH, F</code> and <code>RRF PL, F</code> shift the whole result right, carry first. Repeat $8$ times with <code>DECFSZ COUNT, F</code>.`] })
+      ]
     }
   ]
 });

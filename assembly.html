@@ -500,6 +500,17 @@ table.regs th{background:var(--surface-2);font:600 12.5px var(--sans)}
 .modal-b p{font:14.5px/1.6 var(--sans);color:var(--text);margin:0 0 10px}
 .modal-btns{display:flex;justify-content:flex-end;gap:8px;margin:16px 0 4px}
 
+/* ---------- challenge exercises ---------- */
+.ex-card.challenge{border-color:#f5d28a}
+.ex-card.challenge .ex-head{background:linear-gradient(180deg,#fff6df,var(--surface) 150%);border-top:4px solid #f59e0b}
+.ex-card.challenge .ex-ico{background:linear-gradient(135deg,#f59e0b,#e8590c);box-shadow:0 6px 14px -6px #e8590c}
+.ex-card.challenge .ex-kind{color:#b45309}
+.acc-k.ch{background:#fff3d6;color:#92400e}
+html[data-mode=dark] .ex-card.challenge{border-color:#5c4410}
+html[data-mode=dark] .ex-card.challenge .ex-head{background:linear-gradient(180deg,#2b200b,var(--surface) 150%)}
+html[data-mode=dark] .ex-card.challenge .ex-kind{color:#fbbf24}
+html[data-mode=dark] .acc-k.ch{background:#3a2a0c;color:#fcd34d}
+
 /* ---------- notes on the course text ---------- */
 mark.note-mark{position:relative;background:#ffe866;color:#1f1d0b;border-radius:2px;padding:.04em 0;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background .2s}
 mark.note-mark:hover,mark.note-mark.active{background:#ffd93b}
@@ -2398,7 +2409,7 @@ function buildExercise(ex, hooks) {
   const hints = [].concat(ex.hint || []);
   let hintShown = 0;
   const isProg = ex.type === 'code';
-  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
+  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (ex.challenge ? ' challenge' : '') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
   const fb = el('div', { class: 'fb', 'aria-live': 'polite' });
   const hintBox = el('div', { class: 'fb hint' });
   const solBox = el('div', { class: 'fb sol' });
@@ -2407,8 +2418,8 @@ function buildExercise(ex, hooks) {
   ctx.check = () => doCheck();
   const pts = el('span', { class: 'pt-got', text: saved.done ? '1' : '0' });
   const head = el('div', { class: 'ex-head' },
-    el('span', { class: 'ex-ico', html: MOOC.ICON[isProg ? 'pencil' : 'quiz'] }),
-    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: isProg ? 'Programming exercise · ' + (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz' }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
+    el('span', { class: 'ex-ico', html: MOOC.ICON[ex.challenge ? 'star' : (isProg ? 'pencil' : 'quiz')] }),
+    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: (ex.challenge ? 'Challenge · ' : (isProg ? 'Programming exercise · ' : '')) + (isProg ? (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz') }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
     el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
   const body = el('div', { class: 'ex-body' });
   body.append(el('div', { class: 'q', html: ex.q }));
@@ -2733,6 +2744,7 @@ D.page({
 <ul>
 <li><b>Programming exercises</b> (the cards with a pencil) ask you to write assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. Your program runs in a simulator of the PIC16F887 with its registers, ports, timers, A/D converter, serial port and an LCD.</li>
 <li><b>Quizzes</b> (the cards with a question mark) check that you understood the ideas: multiple choice, short answers, filling in code, and <b>tracing</b> a program instruction by instruction.</li>
+<li><b>Challenges</b> (the gold cards with a star) end every part: a harder assembly exercise that combines the ideas of the part and sometimes goes beyond the lecture slides. Try them when the rest of the part feels easy.</li>
 <li><b>Notes:</b> select any text of the course and choose <b>Add note</b> to write your own note about it. The text is highlighted in yellow; click it to read or change the note. All your notes are listed under <a href="#/notes">All notes</a> in the menu, each with a link to its place in the course.</li>
 <li>Every exercise is worth <b>1 point</b>. Wrong answers cost nothing; try as many times as you need. A hint is always available, and the model solution can be opened after your first attempt.</li>
 </ul>`),
@@ -2993,6 +3005,21 @@ $$1010\,0001_{2} + 1101\,1100_{2} = 1\,0111\,1101_{2} \qquad (161 + 220 = 381)$$
           solution: 'NUM    EQU 0x20\nRESULT EQU 0x21\n\n        COMF    NUM, W        ; W = NUM with every bit flipped\n        ADDLW   1             ; plus one: the two\'s complement\n        MOVWF   RESULT\n        GOTO    $\n'
         }, R`Flipping gives $255 - \text{NUM}$ and adding $1$ gives $256 - \text{NUM}$, the stored pattern of $-\text{NUM}$: $10$ becomes $246$, which reads as $-10$. For $\text{NUM} = 0$ the sum $255 + 1 = 256$ wraps to $0$, as it should.`, { hint: R`Three instructions: <code>COMF NUM, W</code>, <code>ADDLW 1</code>, <code>MOVWF RESULT</code>.` })
       ]
+    },
+{
+      title: 'Challenge: subtract without subtracting',
+      objectives: ['You will use the two\'s complement to subtract with additions only'],
+      blocks: [
+        D.T(R`<p>The PIC subtracts by adding the two's complement (Section 5). This challenge asks you to do the same by hand: compute two differences using only <code>MOVF</code>, <code>COMF</code>, <code>ADDLW</code> and <code>MOVWF</code>, without <code>SUBLW</code> or <code>SUBWF</code>. Think about what $256 - k$ means for a byte, and what <code>COMF</code> gives you.</p>`),
+        D.asm('Subtract without subtracting', R`<p>NUM holds a value between $50$ and $200$. Without any subtraction instruction, calculate</p>
+<ul><li><code>RESULT</code> $= 200 - \text{NUM}$,</li><li><code>DIFF</code> $= \text{NUM} - 50$.</li></ul>
+<p>Use only <code>MOVF</code>, <code>COMF</code>, <code>ADDLW</code> and <code>MOVWF</code>. The tests put several values in NUM.</p>`, {
+          start: 'NUM    EQU 0x20\nRESULT EQU 0x21\nDIFF   EQU 0x22\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[120, 80, 70], [200, 0, 150], [50, 150, 0], [99, 101, 49], [173, 27, 123]].map(([n, r, d]) => ({ name: R`$\text{NUM} = ` + n + R`$`, init: { NUM: n }, expect: { RESULT: r, DIFF: d } })),
+          forbid: [{ re: /\bSUB(LW|WF)\b/i, msg: 'Do not use SUBLW or SUBWF: only additions are allowed.' }],
+          solution: 'NUM    EQU 0x20\nRESULT EQU 0x21\nDIFF   EQU 0x22\n\n    COMF  NUM, W      ; W = 255 - NUM\n    ADDLW 201         ; 255 - NUM + 201 = 456 - NUM, which is 200 - NUM in a byte\n    MOVWF RESULT\n    MOVF  NUM, W\n    ADDLW 206         ; NUM + 206 = NUM + (256 - 50), which is NUM - 50 in a byte\n    MOVWF DIFF\n    GOTO $\n'
+        }, R`In a byte, adding $256 - k$ is the same as subtracting $k$, because the extra $256$ is lost as a carry: $\text{NUM} - 50 = \text{NUM} + 206$. <code>COMF</code> gives $255 - \text{NUM}$, so $200 - \text{NUM} = (255 - \text{NUM}) + 201 - 256$, and the $256$ disappears again.`, { challenge: true, hint: [R`Adding $256 - 50 = 206$ to a byte subtracts $50$.`, R`<code>COMF NUM, W</code> puts $255 - \text{NUM}$ in W. Which number must you add to get $200 - \text{NUM}$, keeping only $8$ bits?`] })
+      ]
     }
   ]
 });
@@ -3196,6 +3223,19 @@ PSECT BLABLA,CLASS=CODE, DELTA=2,ABS
         D.asm('Labels and GOTO', R`<p>Complete the program: after the label <code>START</code>, load $7$ into W and store it in REG1, then jump to the label <code>FINISH</code> with <code>GOTO</code>. The instructions between are skipped. At <code>FINISH</code> the program stops.</p>`, {
           pre: 'REG1 EQU 0x20\nREG2 EQU 0x21', start: 'START:\n    ; load 7 into REG1 and jump to FINISH\n\n    MOVLW 99\n    MOVWF REG2      ; must be skipped\nFINISH:\n    GOTO $\n', tests: [{ expect: { REG1: 7, REG2: 0 } }], reqs: [{ re: /GOTO\s+FINISH/i, msg: 'Jump with GOTO FINISH.' }], solution: 'START:\n    MOVLW 7\n    MOVWF REG1\n    GOTO FINISH\n    MOVLW 99\n    MOVWF REG2\nFINISH:\n    GOTO $\n'
         }, 'GOTO FINISH writes the address of FINISH into the program counter, so the two instructions in between never execute.', { hint: 'Insert MOVLW 7, MOVWF REG1 and GOTO FINISH before MOVLW 99.' })
+      ]
+    },
+{
+      title: 'Challenge: rotate by one hexadecimal digit',
+      objectives: ['You will combine SWAPF, masks and IORWF to move digits between two registers'],
+      blocks: [
+        D.T(R`<p>A 16-bit number is stored in two registers, HI and LO, as four hexadecimal digits: $1234_{16}$ is HI $= 12_{16}$ and LO $= 34_{16}$. <b>Rotating</b> it by one digit to the left moves every digit one place left and brings the first digit round to the end: $1234_{16}$ becomes $2341_{16}$. Each new byte is made of one digit of HI and one digit of LO, so you must take the nibbles apart and put them back together.</p>`),
+        D.asm('Rotate by one hexadecimal digit', R`<p>Rotate the 16-bit number HI:LO by one hexadecimal digit to the left, as described above, and leave the result in HI:LO. TMPH and TMPL are free for intermediate results. Use <code>SWAPF</code>, <code>ANDLW</code>, <code>IORWF</code>, <code>MOVF</code> and <code>MOVWF</code>.</p>`, {
+          start: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [0x1234, 0xABCD, 0x00FF, 0xF00F, 0x5A3C].map(v => { const r = ((v << 4) | (v >> 12)) & 0xFFFF; const hx = (x) => x.toString(16).toUpperCase().padStart(4, '0'); return { name: R`$` + hx(v) + R`_{16} \to ` + hx(r) + R`_{16}$`, init: { HI: v >> 8, LO: v & 255 }, expect: { HI: r >> 8, LO: r & 255 } }; }),
+          reqs: [{ re: /\bSWAPF\b/i, msg: 'Use SWAPF to move the nibbles.' }],
+          solution: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n    SWAPF HI, W       ; 12 -> 21\n    ANDLW 0xF0        ; 20: the 2nd digit, now high\n    MOVWF TMPH\n    SWAPF LO, W       ; 34 -> 43\n    ANDLW 0x0F        ; 03: the 3rd digit, now low\n    IORWF TMPH, F     ; TMPH = 23\n    SWAPF LO, W       ; 43\n    ANDLW 0xF0        ; 40: the 4th digit, now high\n    MOVWF TMPL\n    SWAPF HI, W       ; 21\n    ANDLW 0x0F        ; 01: the 1st digit, now low\n    IORWF TMPL, W     ; 41\n    MOVWF LO\n    MOVF  TMPH, W\n    MOVWF HI          ; HI:LO = 2341\n    GOTO $\n'
+        }, R`For $1234_{16}$ the new high byte is the 2nd and 3rd digits ($23_{16}$) and the new low byte the 4th and 1st digits ($41_{16}$). <code>SWAPF</code> moves a digit to the other half of the byte, <code>ANDLW</code> keeps only the wanted half, and <code>IORWF</code> joins two halves. Build both new bytes in TMPH and TMPL before you overwrite HI and LO.`, { challenge: true, hint: [R`Write the four digits $1, 2, 3, 4$: the new HI is $23$ and the new LO is $41$.`, R`The new HI is (HI with its nibbles swapped, AND $F0_{16}$) OR (LO with its nibbles swapped, AND $0F_{16}$). Build it in TMPH; then build the new LO in the same way.`] })
       ]
     }
   ]
@@ -3411,6 +3451,19 @@ $$C = 1 \iff \text{no borrow (the result is } \geq 0\text{)}, \qquad C = 0 \iff 
         D.multi('Four questions from the lecture', R`<p>Answer each question separately (decimal values).</p><ol><li>REG1 $= 128$: what is REG1 after <code>DECF REG1, W</code>?</li><li>REG1 $= 128$: what is W after <code>DECF REG1, W</code>?</li><li>What is <code>COMF</code> of $127$?</li><li>What is $127$ with its nibbles swapped?</li></ol>`, [{ label: '1.', ans: [128] }, { label: '2.', ans: [127] }, { label: '3.', ans: [128] }, { label: '4.', ans: [247] }], R`1 and 2: the result $127$ goes to W and REG1 stays $128$. 3: $0111\,1111_{2}$ flipped is $1000\,0000_{2} = 128$. 4: $1111\,0111_{2} = 247$.`, { hint: 'Destination W leaves the register unchanged.' }),
         D.mc('Which program leaves 0 in REG1?', R`<p>REG1 holds $5$ at the start. Which program leaves $0$ in REG1?</p>`, ['<code>MOVF REG1, W</code> then <code>SUBWF REG1, F</code>', '<code>MOVF REG1, F</code>', '<code>MOVLW 0</code>', '<code>DECF REG1, W</code> five times'], 0, R`<code>MOVF REG1, W</code> puts $5$ in W and <code>SUBWF REG1, F</code> stores $5 - 5 = 0$ in REG1 (setting Z and C). <code>MOVF REG1, F</code> does not change REG1, <code>MOVLW</code> does not touch REG1, and <code>DECF REG1, W</code> writes into W each time.`, { hint: 'Check where each result is written.' })
       ]
+    },
+{
+      title: 'Challenge: parity without a loop',
+      objectives: ['You will use SWAPF, XORWF and RRF to fold the bits of a byte together'],
+      blocks: [
+        D.T(R`<p>The <b>parity</b> of a byte tells whether it has an odd number of $1$ bits. Serial links use it to detect a damaged byte: one flipped bit changes the parity. The obvious method tests the $8$ bits in a loop. There is a faster trick that needs no loop at all: XOR the byte with a shifted copy of itself, so that pairs of bits are combined, then combine the results again. The XOR of all the bits is the parity.</p>`),
+        D.asm('Parity without a loop', R`<p>Set PARITY to $1$ if NUM contains an odd number of $1$ bits and to $0$ if the number is even, <b>without any loop or skip instruction</b>: no <code>DECFSZ</code>, <code>INCFSZ</code>, <code>BTFSS</code>, <code>BTFSC</code> or <code>GOTO</code> other than the final <code>GOTO $</code>. T and U are free. Remember that <code>RRF</code> rotates through the carry.</p>`, {
+          start: 'NUM    EQU 0x20\nPARITY EQU 0x21\nT      EQU 0x22\nU      EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[0x00, 0], [0x01, 1], [0xFF, 0], [0xB5, 1], [0x96, 0], [0x80, 1], [0x7F, 1]].map(([v, p]) => ({ name: R`$\text{NUM} = ` + H.b8(v).slice(0, 4) + R`\,` + H.b8(v).slice(4) + R`_{2}$`, init: { NUM: v, C: 1, PARITY: 9 }, expect: { PARITY: p } })),
+          forbid: [{ re: /\b(DECFSZ|INCFSZ|BTFSS|BTFSC)\b/i, msg: 'No loops or skips: fold the bits with XOR instead.' }, { re: /\bGOTO\s+(?!\$)/i, msg: 'The only GOTO allowed is the final GOTO $.' }],
+          solution: 'NUM    EQU 0x20\nPARITY EQU 0x21\nT      EQU 0x22\nU      EQU 0x23\n\n    MOVF  NUM, W\n    MOVWF T\n    SWAPF T, W        ; the two nibbles exchanged\n    XORWF T, F        ; low nibble of T = low nibble XOR high nibble\n    MOVF  T, W\n    MOVWF U\n    RRF   U, F\n    RRF   U, W        ; W = T shifted right by 2 (bits 0 and 1 are right)\n    XORWF T, F        ; bits 0 and 1 of T: XOR of two pairs\n    MOVF  T, W\n    MOVWF U\n    RRF   U, W        ; W = T shifted right by 1\n    XORWF T, W        ; bit 0 = XOR of all eight bits\n    ANDLW 1\n    MOVWF PARITY\n    GOTO $\n'
+        }, R`After XOR with the swapped byte, bit $k$ of the low nibble holds $b_{k} \oplus b_{k+4}$. Folding again by $2$ and by $1$ leaves $b_{0} \oplus b_{1} \oplus \ldots \oplus b_{7}$ in bit 0. The carry enters only the high bits during the rotations, and those are thrown away by <code>ANDLW 1</code>.`, { challenge: true, hint: [R`Step 1: <code>SWAPF</code> a copy and <code>XORWF</code> it with the original: the low nibble now has the parity of each pair of bits $b_{k}, b_{k+4}$.`, R`Step 2: XOR that result with itself shifted right by $2$ (two <code>RRF</code>), then by $1$. Keep only bit 0 with <code>ANDLW 1</code>.`] })
+      ]
     }
   ]
 });
@@ -3561,6 +3614,18 @@ STORE:
           solution: "SCORE EQU 0x20\nGRADE EQU 0x21\n\n    MOVLW 85\n    SUBWF SCORE, W      ; SCORE - 85\n    BTFSC STATUS, 0\n    GOTO  GA            ; SCORE >= 85\n    MOVLW 70\n    SUBWF SCORE, W\n    BTFSC STATUS, 0\n    GOTO  GB\n    MOVLW 50\n    SUBWF SCORE, W\n    BTFSC STATUS, 0\n    GOTO  GC\n    MOVLW 'F'\n    GOTO  STORE\nGA: MOVLW 'A'\n    GOTO  STORE\nGB: MOVLW 'B'\n    GOTO  STORE\nGC: MOVLW 'C'\nSTORE:\n    MOVWF GRADE\n    GOTO $\n"
         }, R`Each test is SCORE minus a limit: C $= 1$ means SCORE $\geq$ the limit. Because the highest limit is tested first, a mark that reaches the second test is already known to be below $85$.`, { hint: [R`<code>MOVLW 85</code>, <code>SUBWF SCORE, W</code>, <code>BTFSC STATUS, 0</code>, <code>GOTO GA</code>; then the same for $70$ and $50$.`, R`Each case loads its letter, for example <code>MOVLW 'A'</code>, and all cases end at a common <code>MOVWF GRADE</code>.`] }),
         D.mc('Order of the tests', R`<p>A program tests "SCORE $\geq 50$" first and jumps to the grade C code when it is true; then it tests "SCORE $\geq 70$" and "SCORE $\geq 85$". What grade does a mark of $90$ get?</p>`, ['C', 'A', 'B', 'F'], 0, R`$90 \geq 50$ is already true, so the first test jumps to grade C and the other tests are never reached. With "greater or equal" tests, start from the highest limit.`, { hint: 'Which test is true first?' })
+      ]
+    },
+{
+      title: 'Challenge: sort three numbers',
+      objectives: ['You will chain comparisons and exchanges to sort values'],
+      blocks: [
+        D.T(R`<p>Sorting is one of the most common tasks in programming. For three numbers a short recipe is enough: compare the first two and exchange them if they are in the wrong order, do the same with the last two, and then once more with the first two. Each step is a comparison (Section 2) followed by an exchange through a temporary register (Part 3).</p>`),
+        D.asm('Sort three numbers', R`<p>Sort the unsigned numbers in A, B and C1 so that at the end $\text{A} \leq \text{B} \leq \text{C1}$. TEMP is free. The tests try every possible order, and equal values.</p>`, {
+          start: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[10, 20, 30], [10, 30, 20], [20, 10, 30], [20, 30, 10], [30, 10, 20], [30, 20, 10], [5, 5, 1], [255, 0, 128]].map(v => { const s = v.slice().sort((x, y) => x - y); return { name: R`$` + v.join(R`,\ `) + R`$`, init: { A: v[0], B: v[1], C1: v[2] }, expect: { A: s[0], B: s[1], C1: s[2] } }; }),
+          solution: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n    MOVF  A, W        ; A and B\n    SUBWF B, W        ; B - A: C = 0 if B < A\n    BTFSC STATUS, 0\n    GOTO  AB_OK\n    MOVF  A, W        ; exchange A and B\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nAB_OK:\n    MOVF  B, W        ; B and C1\n    SUBWF C1, W\n    BTFSC STATUS, 0\n    GOTO  BC_OK\n    MOVF  B, W\n    MOVWF TEMP\n    MOVF  C1, W\n    MOVWF B\n    MOVF  TEMP, W\n    MOVWF C1\nBC_OK:\n    MOVF  A, W        ; A and B once more\n    SUBWF B, W\n    BTFSC STATUS, 0\n    GOTO  DONE\n    MOVF  A, W\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nDONE:\n    GOTO $\n'
+        }, R`The first two steps carry the biggest value to C1; the third step puts the other two in order. $B - A$ with C $= 0$ means $B < A$, the only case that needs an exchange; equal values stay where they are.`, { challenge: true, hint: [R`Write one "compare and exchange" block for A and B: <code>MOVF A, W</code>, <code>SUBWF B, W</code>, skip the exchange when C $= 1$.`, R`Repeat the block for B and C1, then once more for A and B.`] })
       ]
     }
   ]
@@ -3732,6 +3797,20 @@ DELAY_500MS:                   ; three nested loops
         }, R`$499\,998$ cycles in the subroutine plus $2$ for the CALL give exactly $500\,000$ cycles.`, { hint: 'Copy the routine exactly, including the NOP and the RETURN.' }),
         D.num('Period of 1 Hz', R`<p>An LED blinks at $2\ \mathrm{Hz}$ with equal on and off times. How long is it on, in milliseconds?</p>`, 250, R`$T = \frac{1}{2\ \mathrm{Hz}} = 500\ \mathrm{ms}$ and the LED is on for $\frac{T}{2} = 250\ \mathrm{ms}$.`, { unit: 'ms', hint: R`First find the period $T = \frac{1}{f}$.` }),
         D.num('Half the blinking speed', R`<p>To blink the LED at $0.5\ \mathrm{Hz}$ instead of $1\ \mathrm{Hz}$ (with equal on and off times), how many times must <code>DELAY_500MS</code> be called after each change of the LED?</p>`, 2, R`At $0.5\ \mathrm{Hz}$ the period is $\frac{1}{0.5} = 2\ \mathrm{s}$: $1\ \mathrm{s}$ on and $1\ \mathrm{s}$ off, which is two calls of $500\ \mathrm{ms}$.`, { hint: 'Find the new period first.' })
+      ]
+    },
+{
+      title: 'Challenge: integer square root',
+      objectives: ['You will turn a mathematical identity into a loop'],
+      blocks: [
+        D.T(R`<p>The PIC cannot multiply, let alone take square roots. But the odd numbers have a beautiful property:</p>
+$$1 = 1^{2}, \quad 1 + 3 = 2^{2}, \quad 1 + 3 + 5 = 3^{2}, \quad \ldots, \quad 1 + 3 + 5 + \cdots + (2k - 1) = k^{2}.$$
+<p>So the square root of a number is how many odd numbers $1, 3, 5, \ldots$ can be subtracted from it, one after the other, before the rest becomes too small. For $20$: $20 - 1 - 3 - 5 - 7 = 4$, and the next odd number $9$ no longer fits, so $\lfloor \sqrt{20} \rfloor = 4$.</p>`),
+        D.asm('Integer square root', R`<p>Store in ROOT the integer square root of N ($0 \leq \text{N} \leq 255$): the biggest whole number whose square is not more than N. Use the odd-number method above. REST and ODD are free.</p>`, {
+          start: 'N    EQU 0x20\nROOT EQU 0x21\nREST EQU 0x22\nODD  EQU 0x23\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[0, 0], [1, 1], [2, 1], [15, 3], [16, 4], [20, 4], [99, 9], [100, 10], [255, 15]].map(([n, r]) => ({ name: R`$\text{N} = ` + n + R`$`, init: { N: n, ROOT: 99 }, expect: { ROOT: r } })),
+          solution: 'N    EQU 0x20\nROOT EQU 0x21\nREST EQU 0x22\nODD  EQU 0x23\n\n    CLRF  ROOT\n    MOVF  N, W\n    MOVWF REST        ; what is left\n    MOVLW 1\n    MOVWF ODD         ; the next odd number\nLOOP:\n    MOVF  ODD, W\n    SUBWF REST, W     ; REST - ODD\n    BTFSS STATUS, 0\n    GOTO  DONE        ; it does not fit any more\n    MOVWF REST\n    INCF  ROOT, F\n    INCF  ODD, F\n    INCF  ODD, F      ; ODD + 2\n    GOTO  LOOP\nDONE:\n    GOTO $\n'
+        }, R`Each round subtracts the next odd number and counts one. After $k$ rounds exactly $k^{2}$ has been subtracted, so the loop stops at the biggest $k$ with $k^{2} \leq \text{N}$. For $\text{N} = 255$: $15^{2} = 225$ fits but $16^{2} = 256$ does not.`, { challenge: true, hint: [R`REST starts as N, ODD as $1$, ROOT as $0$.`, R`Loop: if $\text{REST} - \text{ODD}$ needs a borrow, stop; otherwise keep the difference in REST, add $1$ to ROOT and $2$ to ODD.`] })
       ]
     }
   ]
@@ -3907,6 +3986,19 @@ SETUP:
         D.tf('CONFIG in RAM', 'The configuration words are located in the RAM.', false, 'They are stored with the program in the chip, not in the RAM, and the program does not change them while it runs.', { hint: 'Are they changed while the program runs?' }),
         D.mc('Which is true?', 'Which statement matches the conclusions of Lecture 8?', ['In assembly you know exactly how long each instruction takes; in C you cannot predict the execution time exactly', 'C programs always run faster than assembly', 'In C you must select the RAM banks yourself', 'Assembly code is always placed by the compiler'], 0, 'C is easier, assembly gives direct control and exact timing.', { hint: 'Which language shows every instruction that is executed?' }),
         D.fill('The assembly template', 'Complete the skeleton of an assembly program.', '    #include <{{xc.inc}}>\n\n    {{ORG}} 0\n    GOTO {{MAIN}}\n    ORG 0X{{4}}\n    {{RETFIE}}\n\nMAIN:\n    CALL {{SETUP}}\n    GOTO $\n\nSETUP:\n    ; configure the ports\n    {{RETURN}}', R`<code>xc.inc</code> gives the register names; <code>ORG 0</code> with <code>GOTO MAIN</code> is the reset vector, <code>ORG 0X4</code> the interrupt vector (here only <code>RETFIE</code>); MAIN calls SETUP, which ends with <code>RETURN</code>.`, { lang: 'asm', hint: 'Look at the template of Activity 2 above.' })
+      ]
+    },
+{
+      title: 'Challenge: a byte as hexadecimal text',
+      objectives: ['You will write a subroutine and call it twice with different inputs'],
+      blocks: [
+        D.T(R`<p>To show a register on an LCD or send it to a computer, the program must turn its value into text. In hexadecimal every byte becomes exactly two characters: $3A_{16}$ becomes <code>'3'</code> and <code>'A'</code>. The digits $0 \ldots 9$ map to the ASCII codes $48 \ldots 57$, but $A \ldots F$ map to $65 \ldots 70$, so a simple addition is not enough: a look-up table handles both cases at once.</p>`),
+        D.asm('A byte as hexadecimal text', R`<p>Write a subroutine <code>NIB2HEX</code> that turns the value $0 \ldots 15$ in W into its hexadecimal character in W (<code>'0'</code> … <code>'9'</code>, <code>'A'</code> … <code>'F'</code>). Then call it <b>twice</b> to store the two characters of BYTE in HEXH (the high digit) and HEXL (the low digit).</p>`, {
+          start: 'BYTE EQU 0x20\nHEXH EQU 0x21\nHEXL EQU 0x22\n\n; the main code, then the subroutine NIB2HEX\n\n    GOTO $\n',
+          tests: [[0x3A, '3A'], [0x00, '00'], [0xFF, 'FF'], [0x9C, '9C'], [0x07, '07']].map(([v, t]) => ({ name: R`$\text{BYTE} = ` + t + R`_{16}$`, init: { BYTE: v }, expect: { HEXH: t.charCodeAt(0), HEXL: t.charCodeAt(1) } })),
+          reqs: [{ re: /CALL\s+NIB2HEX[\s\S]*CALL\s+NIB2HEX/i, msg: 'Call NIB2HEX twice.' }],
+          solution: "BYTE EQU 0x20\nHEXH EQU 0x21\nHEXL EQU 0x22\n\n    SWAPF BYTE, W     ; the high digit\n    ANDLW 0x0F\n    CALL  NIB2HEX\n    MOVWF HEXH\n    MOVF  BYTE, W     ; the low digit\n    ANDLW 0x0F\n    CALL  NIB2HEX\n    MOVWF HEXL\n    GOTO  $\n\nNIB2HEX:              ; W = 0 ... 15 -> W = its character\n    ADDWF PCL, F\n" + '0123456789ABCDEF'.split('').map(c => "    RETLW '" + c + "'\n").join('')
+        }, R`<code>SWAPF BYTE, W</code> and <code>ANDLW 0x0F</code> isolate the high digit, <code>ANDLW 0x0F</code> alone the low digit. The table returns the character for each of the $16$ values; one subroutine serves both calls.`, { challenge: true, hint: [R`The subroutine is a look-up table: <code>ADDWF PCL, F</code> followed by $16$ <code>RETLW</code> instructions, from <code>RETLW '0'</code> to <code>RETLW 'F'</code>.`, R`For the high digit, <code>SWAPF BYTE, W</code> then <code>ANDLW 0x0F</code> before the call; for the low digit, <code>MOVF BYTE, W</code> then <code>ANDLW 0x0F</code>.`] })
       ]
     }
   ]
@@ -4087,6 +4179,23 @@ REPEAT:
           solution: 'NIBBLE EQU 0x20\nTEMP   EQU 0x21\n\n    BANKSEL TRISD\n    CLRF    TRISD\n    BANKSEL PORTD\n    SWAPF   NIBBLE, W   ; value in the high nibble\n    ANDLW   0xF0\n    MOVWF   TEMP\n    MOVF    PORTD, W\n    ANDLW   0x0F        ; keep RD0-RD3\n    IORWF   TEMP, W     ; add the new high nibble\n    MOVWF   PORTD\n    GOTO $\n'
         }, R`<code>SWAPF NIBBLE, W</code> moves the value to bits 4 to 7; the AND masks keep only the wanted part of each byte, and the OR combines them before one write to PORTD.`, { hint: [R`<code>SWAPF NIBBLE, W</code>, <code>ANDLW 0xF0</code>, store in TEMP.`, R`<code>MOVF PORTD, W</code>, <code>ANDLW 0x0F</code>, <code>IORWF TEMP, W</code>, <code>MOVWF PORTD</code>.`] })
       ]
+    },
+{
+      title: 'Challenge: three buttons and a counter',
+      objectives: ['You will detect the moment a button is pressed by comparing the port with its previous value'],
+      blocks: [
+        D.T(R`<p>Activity 4 waits for a press, then for the release. With several buttons that no longer works: while the program waits for one button, it misses the others. The usual solution is <b>edge detection</b>. Read the whole port in every round, and compare it with the value of the previous round:</p>
+$$\text{pressed now} = \text{NOW AND NOT OLD}.$$
+<p>A bit is $1$ only in the round in which that button went from released to pressed, so a button held down for a long time counts only once. Then copy NOW into OLD for the next round.</p>`),
+        D.asm('Three buttons and a counter', R`<p>Three active-high buttons are connected to RB1, RB2 and RB3, and eight LEDs to PORTD, which shows COUNT. Each <b>press</b> (not each round while held) of RB1 adds $1$ to COUNT, of RB2 subtracts $1$ (but never below $0$), and of RB3 resets COUNT to $0$. Configure the pins yourself: PORTD outputs, and the PORTB pins digital (they are analog after a reset). Then loop forever.</p>`, {
+          start: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n; configure the pins, then loop forever\n\nLOOP:\n\n    GOTO LOOP\n',
+          tests: [
+            { name: 'Three presses of RB1, held down', events: [[100, 2], [180, 0], [260, 2], [340, 0], [420, 2], [500, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 3, 'OUT.D': 3 } },
+            { name: 'Up three times, down once', events: [[100, 2], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 4], [480, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 2, 'OUT.D': 2 } },
+            { name: 'Down at zero, up twice, reset, up', events: [[100, 4], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 8], [440, 0], [500, 2], [540, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 800, limitOk: true, expect: { COUNT: 1, 'OUT.D': 1 } }],
+          solution: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n    BANKSEL ANSELH\n    CLRF    ANSELH        ; PORTB digital\n    BANKSEL TRISD\n    CLRF    TRISD         ; PORTD outputs\n    BANKSEL PORTD\n    CLRF    COUNT\n    CLRF    OLD\nLOOP:\n    MOVF    PORTB, W\n    MOVWF   NOW\n    COMF    OLD, W        ; NOT OLD\n    ANDWF   NOW, W        ; buttons pressed in this round\n    MOVWF   EDGES\n    MOVF    NOW, W\n    MOVWF   OLD           ; remember for the next round\n    BTFSC   EDGES, 1      ; RB1: plus one\n    INCF    COUNT, F\n    BTFSS   EDGES, 2      ; RB2: minus one, not below 0\n    GOTO    NO_DOWN\n    MOVF    COUNT, F\n    BTFSS   STATUS, 2\n    DECF    COUNT, F\nNO_DOWN:\n    BTFSC   EDGES, 3      ; RB3: reset\n    CLRF    COUNT\n    MOVF    COUNT, W\n    MOVWF   PORTD\n    GOTO    LOOP\n'
+        }, R`$\text{NOW AND NOT OLD}$ has a $1$ only for a button that is pressed now and was released in the previous round, so holding a button counts once. <code>MOVF COUNT, F</code> tests COUNT for zero before the decrement.`, { challenge: true, hint: [R`Clear ANSELH (bank 3) and TRISD (bank 1) first, then go back to bank 0.`, R`In the loop: NOW $=$ PORTB; EDGES $=$ NOW AND NOT OLD (<code>COMF OLD, W</code> then <code>ANDWF NOW, W</code>); OLD $=$ NOW; then test the bits 1, 2 and 3 of EDGES.`] })
+      ]
     }
   ]
 });
@@ -4223,6 +4332,20 @@ D.part({
         D.num('ASCII of a digit', R`<p>What is the ASCII code (decimal) of the character <code>'7'</code>?</p>`, 55, R`$48 + 7 = 55$.`, { hint: R`<code>'0'</code> is $48$.` }),
         D.num('BCD in hexadecimal', R`<p>The value $83$ is stored in packed BCD. What does the register hold, written in hexadecimal?</p>`, ['83'], R`Tens $8 = 1000_{2}$ in the high nibble and units $3 = 0011_{2}$ in the low nibble: $1000\,0011_{2} = 83_{16}$ (which is $131$ in decimal).`, { kind: 'hex', hint: 'One digit per nibble.' })
       ]
+    },
+{
+      title: 'Challenge: multiplication in eight rounds',
+      objectives: ['You will multiply two bytes by shift and add, as fast as the PIC allows'],
+      blocks: [
+        D.T(R`<p>Repeated addition needs up to $255$ rounds. Long multiplication in binary needs only $8$, one for each bit of the multiplier: for every bit of Y that is $1$, add X shifted to the position of that bit. For $13 \times 11$, $11 = 1011_{2}$, so</p>
+$$13 \times 11 = 13 \times 8 + 13 \times 2 + 13 \times 1 = 104 + 26 + 13 = 143.$$
+<p>On the PIC the shifting is done with <code>RRF</code> or <code>RLF</code> on a 16-bit value, and the carry links the two bytes. There are several ways to arrange the rounds; the hints show a short one.</p>`),
+        D.asm('Multiplication in eight rounds', R`<p>Calculate the 16-bit product PH:PL $= \text{X} \times \text{Y}$ of any two bytes by shift and add: one round per bit of Y, $8$ rounds in all. The program must finish in at most $200$ instruction cycles (repeated addition needs about $1800$ for $255 \times 255$). X and Y may be changed; COUNT and TEMP are free.</p>`, {
+          start: 'X     EQU 0x20\nY     EQU 0x21\nPH    EQU 0x22\nPL    EQU 0x23\nCOUNT EQU 0x24\nTEMP  EQU 0x25\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[255, 255], [200, 100], [100, 200], [13, 11], [0, 77], [77, 0], [1, 1], [128, 2]].map(([x, y]) => ({ name: R`$` + x + R` \times ` + y + R`$`, init: { X: x, Y: y, PH: 0xA5, PL: 0x5A, C: 1 }, expect: { PH: (x * y) >> 8, PL: (x * y) & 255 }, check: (r) => r.get('CYCLES') <= 200 ? null : 'the program took ' + r.get('CYCLES') + ' cycles, but at most 200 are allowed: use one round per bit of Y.' })),
+          solution: "X     EQU 0x20\nY     EQU 0x21\nPH    EQU 0x22\nPL    EQU 0x23\nCOUNT EQU 0x24\nTEMP  EQU 0x25\n\n    CLRF  PH\n    CLRF  PL\n    MOVLW 8\n    MOVWF COUNT         ; one round per bit of Y\nLOOP:\n    RRF   Y, F          ; the next bit of Y falls into the carry\n    BTFSS STATUS, 0\n    GOTO  SHIFT         ; bit = 0: no addition (and C = 0)\n    MOVF  X, W\n    ADDWF PH, F         ; add X at the top: the carry is the 9th bit\nSHIFT:\n    RRF   PH, F         ; shift PH:PL right, the carry enters at the top\n    RRF   PL, F\n    DECFSZ COUNT, F\n    GOTO  LOOP\n    GOTO  $\n"
+        }, R`Each round takes one bit of Y, from bit 0. When the bit is $1$, X is added to PH; then PH:PL is shifted one place right, carry first, so every earlier addition moves one place further down. After $8$ rounds the addition made for bit $k$ has moved to the position $2^{k}$. When the bit is $0$ the carry is already $0$, so the shift brings in a $0$. The model solution needs about $80$ cycles for any two numbers.`, { challenge: true, hint: [R`Take the bits of Y one at a time with <code>RRF Y, F</code>: the bit falls into the carry. <code>BTFSS STATUS, 0</code> skips the addition when it is $0$.`, R`Add X to the <b>high</b> byte (<code>MOVF X, W</code>, <code>ADDWF PH, F</code>): the carry of this addition is the 9th bit. Then <code>RRF PH, F</code> and <code>RRF PL, F</code> shift the whole result right, carry first. Repeat $8$ times with <code>DECFSZ COUNT, F</code>.`] })
+      ]
     }
   ]
 });
@@ -4335,6 +4458,20 @@ LOOP:
           solution: '    CLRF  INDEX\n    MOVLW 0x30\n    MOVWF FSR\nLOOP:\n    MOVF  INDEX, W\n    CALL  MSG         ; W = character number INDEX\n    MOVWF INDF        ; MOVWF does not change Z\n    IORLW 0           ; Z = 1 if it was the end mark\n    BTFSC STATUS, 2\n    GOTO  DONE\n    INCF  INDEX, F\n    INCF  FSR, F\n    GOTO  LOOP\nDONE:\n    GOTO $\n'
         }, R`RETLW does not change Z, so the returned character is tested with <code>IORLW 0</code> (W stays the same, Z $= 1$ for $0$). Storing it first means the end mark is copied too.`, { hint: [R`Keep the index in INDEX and the destination in FSR.`, R`<code>MOVF INDEX, W</code>, <code>CALL MSG</code>, <code>MOVWF INDF</code>, then <code>IORLW 0</code> to test for the end mark.`] }),
         D.mc('Why tables for text?', 'Why is constant text usually stored as a RETLW table rather than in RAM?', ['The program memory is much larger than the RAM, and the text never changes', 'RAM cannot hold ASCII codes', 'RETLW is faster than MOVF', 'Tables can be changed while the program runs'], 0, 'The PIC16F887 has 8192 words of program memory but only 368 bytes of free RAM.', { hint: 'Compare the sizes of the two memories.' })
+      ]
+    },
+{
+      title: 'Challenge: bubble sort',
+      objectives: ['You will sort a block of RAM with two nested loops and a pointer'],
+      blocks: [
+        D.T(R`<p>Three values can be sorted with three compare-and-exchange steps. For a whole block, <b>bubble sort</b> repeats one simple pass: walk through the block and exchange every pair of neighbours that is in the wrong order. After the first pass the biggest value has "bubbled up" to the end of the block; after the second pass the second biggest is in place, and so on. For $n$ values, $n - 1$ passes are always enough.</p>
+$$5, 3, 8, 1 \;\to\; 3, 5, 1, 8 \;\to\; 3, 1, 5, 8 \;\to\; 1, 3, 5, 8$$`),
+        D.asm('Bubble sort', R`<p>The $8$ bytes at $30_{16} \ldots 37_{16}$ must be sorted in increasing order (unsigned), in place. Walk through the block with FSR and INDF. PASS, CNT and TMP, in the shared area, are free. The byte at $38_{16}$, just after the block, must not change.</p>`, {
+          start: 'PASS EQU 0x70\nCNT  EQU 0x71\nTMP  EQU 0x72\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[5, 3, 8, 1, 9, 2, 7, 4], [8, 7, 6, 5, 4, 3, 2, 1], [1, 2, 3, 4, 5, 6, 7, 8], [3, 3, 1, 1, 2, 2, 0, 255], [200, 10, 255, 0, 128, 127, 1, 254]].map(a => ({ name: R`$` + a.join(R`,\ `) + R`$`, init: Object.assign(block(0x30, a.concat([0x5A])), { C: 1 }), expect: block(0x30, a.slice().sort((x, y) => x - y).concat([0x5A])) })),
+          reqs: [{ re: /\bINDF\b/i, msg: 'Walk through the block with FSR and INDF.' }],
+          solution: "PASS EQU 0x70\nCNT  EQU 0x71\nTMP  EQU 0x72\n\n    MOVLW 7\n    MOVWF PASS          ; 7 passes are always enough for 8 values\nOUTER:\n    MOVLW 0x30\n    MOVWF FSR           ; FSR -> the first value\n    MOVLW 7\n    MOVWF CNT           ; 7 neighbouring pairs\nINNER:\n    MOVF  INDF, W\n    MOVWF TMP           ; TMP = the left value\n    INCF  FSR, F        ; FSR -> the right value\n    MOVF  INDF, W       ; W = the right value\n    SUBWF TMP, W        ; left - right: C = 0 if left < right\n    BTFSC STATUS, 2\n    GOTO  NEXT          ; equal: nothing to do\n    BTFSS STATUS, 0\n    GOTO  NEXT          ; left < right: already in order\n    MOVF  INDF, W       ; exchange: W = the right value\n    DECF  FSR, F\n    MOVWF INDF          ; the left place gets the right value\n    INCF  FSR, F\n    MOVF  TMP, W\n    MOVWF INDF          ; the right place gets the old left value\nNEXT:\n    DECFSZ CNT, F       ; FSR already points to the next pair\n    GOTO  INNER\n    DECFSZ PASS, F\n    GOTO  OUTER\n    GOTO  $\n"
+        }, R`Each pass compares the $7$ pairs of neighbours and exchanges those in the wrong order; the biggest value that is not yet in place moves to its end position. $7$ passes are enough for $8$ values. After a comparison FSR already points to the right-hand value, which is the left-hand value of the next pair. Equal neighbours stay where they are.`, { challenge: true, hint: [R`Two loops: an outer loop of $7$ passes and an inner loop of $7$ pairs. Each pass starts with <code>MOVLW 0x30</code>, <code>MOVWF FSR</code>.`, R`For one pair: copy INDF into TMP, <code>INCF FSR, F</code>, and compare INDF with TMP. To exchange them: <code>MOVF INDF, W</code>, <code>DECF FSR, F</code>, <code>MOVWF INDF</code>, <code>INCF FSR, F</code>, then TMP into INDF.`] })
       ]
     }
   ]
@@ -4472,6 +4609,22 @@ STATUS_TEMP EQU 0x71    ; reachable from every bank
           solution: '    MOVWF W_TEMP\n    SWAPF STATUS, W\n    MOVWF STATUS_TEMP\n    BCF INTF\n    INCF PRESSES, F\n    MOVF PRESSES, W\n    MOVWF PORTD\n    SWAPF STATUS_TEMP, W\n    MOVWF STATUS\n    SWAPF W_TEMP, F\n    SWAPF W_TEMP, W\n    RETFIE\n'
         }, 'Without the saving, an interrupt just after MOVLW 7 leaves the ISR\'s value in W, and an interrupt just before a BTFSS changes the Z flag that it tests.', { hint: [R`At the start: <code>MOVWF W_TEMP</code>, <code>SWAPF STATUS, W</code>, <code>MOVWF STATUS_TEMP</code>.`, R`Before <code>RETFIE</code>: <code>SWAPF STATUS_TEMP, W</code>, <code>MOVWF STATUS</code>, <code>SWAPF W_TEMP, F</code>, <code>SWAPF W_TEMP, W</code>.`] })
       ]
+    },
+{
+      title: 'Challenge: two interrupt sources',
+      objectives: ['You will write an ISR that serves two interrupt sources'],
+      blocks: [
+        D.T(R`<p>The PIC16F887 has a single interrupt vector, $0004_{16}$, for all its interrupt sources. When several sources are enabled, the ISR must find out which one interrupted by testing their flags, serve every source whose flag is set, and clear each of those flags. If two events happen at the same time, both flags are set: an ISR that serves only one of them and returns is called again at once for the other.</p>`),
+        D.asm('Two interrupt sources', R`<p>The main code (given after your ISR) enables the RB0 interrupt and the Timer0 interrupt, then checks W and the Z flag in an endless loop, as in the exercise <i>Save the context</i>, counting every damage in ERRORS. Timer0 counts the instruction cycles without prescaler, so it overflows every $256$ cycles. Write the ISR:</p>
+<ul><li>save W and STATUS;</li><li>if INTF is set: clear it and add $1$ to PRESSES;</li><li>if T0IF is set: clear it, add $1$ to TICKS and toggle RD7;</li><li>restore STATUS and W, and return with <code>RETFIE</code>.</li></ul>
+<p>The simulator presses the button at many different moments. At the end ERRORS must be $0$, and RD7 must have changed once per tick.</p>`, {
+          pre: "ZEROREG EQU 0x21\nERRORS  EQU 0x22\nPRESSES EQU 0x23\nTICKS   EQU 0x24\nW_TEMP  EQU 0x70\nSTATUS_TEMP EQU 0x71\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n",
+          post: "MAIN:\n    CALL SETUP\n    CLRF ZEROREG\n    CLRF ERRORS\n    CLRF PRESSES\n    CLRF TICKS\n    BSF  INTE           ; the RB0 interrupt\n    BSF  T0IE           ; the Timer0 interrupt\n    BSF  GIE\nLOOP:\n    MOVLW 7\n    XORLW 7             ; W must still be 7: Z = 1\n    BTFSS STATUS, 2\n    INCF ERRORS, F      ; W or Z was damaged\n    MOVF ZEROREG, W     ; sets Z = 1\n    BTFSS STATUS, 2     ; Z must still be 1\n    INCF ERRORS, F\n    GOTO LOOP\n\nSETUP:\n    CLRF PORTD\n    BSF  RP0\n    MOVLW 11001000B     ; RB0 rising edge, Timer0 from the instruction clock, no prescaler\n    MOVWF OPTION_REG\n    MOVLW 11111111B     ; RB0 is input\n    MOVWF TRISB\n    CLRF TRISD          ; PORTD is output\n    BSF  RP1\n    CLRF ANSELH         ; RB0 is digital\n    BCF  RP0\n    BCF  RP1\n    RETURN\n",
+          start: '    ; save W and STATUS\n\n    ; the button: INTF\n\n    ; Timer0: T0IF\n\n    ; restore STATUS and W\n\n    RETFIE\n',
+          tests: [['Timer0 alone', []], ['Five presses', [300, 520, 777, 1010, 1300]], ['Twenty presses', [200, 263, 331, 397, 466, 529, 601, 668, 734, 809, 871, 940, 1003, 1077, 1142, 1215, 1281, 1356, 1420, 1497]]].map(([name, steps]) => ({ name, events: pressSteps(steps), maxSteps: 2500, limitOk: true, expect: { ERRORS: 0, PRESSES: steps.length, TICKS: [11, 16] }, check: (r) => r.get('EDGES.D7') === r.get('TICKS') ? null : 'RD7 changed ' + r.get('EDGES.D7') + ' times but TICKS is ' + r.get('TICKS') + ': toggle RD7 once at every Timer0 overflow.' })),
+          solution: "    MOVWF W_TEMP        ; save W\n    SWAPF STATUS, W     ; save STATUS\n    MOVWF STATUS_TEMP\n    BTFSS INTF          ; the button?\n    GOTO  NOT_BUTTON\n    BCF   INTF\n    INCF  PRESSES, F\nNOT_BUTTON:\n    BTFSS T0IF          ; Timer0?\n    GOTO  RESTORE\n    BCF   T0IF\n    INCF  TICKS, F\n    MOVLW 10000000B\n    XORWF PORTD, F      ; toggle RD7\nRESTORE:\n    SWAPF STATUS_TEMP, W\n    MOVWF STATUS\n    SWAPF W_TEMP, F\n    SWAPF W_TEMP, W\n    RETFIE\n"
+        }, R`With two sources the ISR cannot assume which event called it: it tests INTF and T0IF and serves every flag that is set. A flag that is not cleared calls the ISR again at once, forever. Saving W and STATUS matters even more here: Timer0 interrupts the main loop every $256$ cycles, sooner or later at every possible place.`, { challenge: true, hint: [R`After saving the context: <code>BTFSS INTF</code> and a <code>GOTO</code> past the code of the button, which is <code>BCF INTF</code> and <code>INCF PRESSES, F</code>.`, R`Then the same for T0IF. Toggle RD7 with <code>MOVLW 10000000B</code> and <code>XORWF PORTD, F</code>. W is changed here, which is why it was saved.`] })
+      ]
     }
   ]
 });
@@ -4608,6 +4761,18 @@ $$t = T_{\text{ins}} \times \text{prescaler} \times (65536 - \text{TMR1}).$$
           solution: 'MAIN:\n    CALL SETUP\nREPEAT:\n    MOVLW 0x0B\n    MOVWF TMR1H\n    MOVLW 0xDC\n    MOVWF TMR1L\n    BTFSS TMR1IF\n    GOTO $-1\n    BCF TMR1IF\n    MOVLW 00000001B\n    XORWF PORTD, F\n    GOTO REPEAT\n\nSETUP:\n    CLRF PORTD\n    BSF RP0\n    MOVLW 01100000B\n    MOVWF OSCCON\n    CLRF TRISD\n    BCF RP0\n    MOVLW 00110001B\n    MOVWF T1CON\n    RETURN\n'
         }, R`Every $62500 \times 8$ cycles $= 500\ \mathrm{ms}$ the flag is set and RD0 toggles: a $1\ \mathrm{Hz}$ signal.`, { hint: [R`T1CON $= 00110001B$ (in bank 0).`, R`The loop: <code>MOVLW 0x0B</code>, <code>MOVWF TMR1H</code>, <code>MOVLW 0xDC</code>, <code>MOVWF TMR1L</code>, <code>BTFSS TMR1IF</code>, <code>GOTO $-1</code>, <code>BCF TMR1IF</code> and the XOR toggle.`] })
       ]
+    },
+{
+      title: 'Challenge: measure a pulse',
+      objectives: ['You will use Timer1 as a stopwatch to measure the length of a pulse'],
+      blocks: [
+        D.T(R`<p>Timer1 can also work as a stopwatch: switched on at the start of an event and off at its end, it holds the duration in instruction cycles, up to $65535$. Many sensors answer with a pulse whose length is the measurement; an ultrasonic distance sensor, for example, makes a pulse as long as the echo takes to come back. With a $4\ \mathrm{MHz}$ clock, one count of Timer1 without prescaler is $1\ \mu\mathrm{s}$.</p>`),
+        D.asm('Measure a pulse', R`<p>A pulse arrives on RD0, which is an input after a reset: the pin goes to $1$, stays there for a while, and goes back to $0$. Measure its length in instruction cycles with Timer1 (internal clock, prescaler $1$) and store it in WH:WL. Start counting from $0$: the timer holds an unknown value after a reset. The pulse lasts at most $65535$ cycles; a difference of a few cycles is accepted.</p>`, {
+          start: 'WH EQU 0x20\nWL EQU 0x21\n\n; write your code here\n\n    GOTO $\n',
+          tests: [1000, 300, 20000, 50000].map(w => ({ name: R`Pulse of $` + w + R`$ cycles`, init: { TMR1H: 0x12, TMR1L: 0x34, WH: 9, WL: 9 }, events: [{ at: 5000, pins: { D: 1 } }, { at: 5000 + w, pins: { D: 0 } }], maxSteps: 60000, limitOk: true, check: (r) => { const got = r.get('WH') * 256 + r.get('WL'); return Math.abs(got - w) <= 12 ? null : 'WH:WL is ' + got + ', but the pulse lasted ' + w + ' cycles.'; } })),
+          solution: "WH EQU 0x20\nWL EQU 0x21\n\n    CLRF  T1CON         ; Timer1 off: internal clock, prescaler 1\n    CLRF  TMR1H\n    CLRF  TMR1L\nWAIT_HIGH:\n    BTFSS PORTD, 0      ; wait for the start of the pulse\n    GOTO  WAIT_HIGH\n    BSF   T1CON, 0      ; TMR1ON: start counting\nWAIT_LOW:\n    BTFSC PORTD, 0      ; wait for the end of the pulse\n    GOTO  WAIT_LOW\n    BCF   T1CON, 0      ; stop\n    MOVF  TMR1H, W\n    MOVWF WH\n    MOVF  TMR1L, W\n    MOVWF WL\n    GOTO  $\n"
+        }, R`T1CON $= 0$ selects the instruction clock and prescaler $1$, and keeps the timer stopped while TMR1H and TMR1L are cleared. Each polling loop reacts within $3$ cycles, so the result differs from the real length by only a few cycles. Stopping the timer before reading it keeps the two bytes consistent: reading a running timer could give a high byte and a low byte from different moments.`, { challenge: true, hint: [R`Clear T1CON (Timer1 off, prescaler $1$, internal clock), TMR1H and TMR1L. Then wait for the pulse with <code>BTFSS PORTD, 0</code> and <code>GOTO $-1</code>.`, R`<code>BSF T1CON, 0</code> (TMR1ON) starts the timer. Wait for RD0 $= 0$, stop the timer with <code>BCF T1CON, 0</code>, and copy TMR1H into WH and TMR1L into WL.`] })
+      ]
     }
   ]
 });
@@ -4735,6 +4900,23 @@ $$V_{\text{out}} = \frac{R_{2}}{R_{1} + R_{2}}\,V_{\text{in}} \quad\Rightarrow\q
           tests: [[0.5, 1], [0.25, 0], [0.41, 1], [0.40, 0]].map(([v, on]) => ({ name: R`$` + (v * 100).toFixed(0) + R`\,^{\circ}\mathrm{C}$`, init: { analog: { 0: v }, vrefP: 1 }, maxSteps: 400, limitOk: true, expect: { RD6: on } })),
           solution: 'MAIN:\n    CALL SETUP\nLOOP:\n    CALL READ_AN0\n    SUBLW 102           ; 102 - W: C = 0 if W > 102\n    BTFSS STATUS, 0\n    GOTO HOT\n    BCF  PORTD, 6       ; relay off\n    GOTO LOOP\nHOT:\n    BSF  PORTD, 6       ; relay on\n    GOTO LOOP\n'
         }, R`<code>SUBLW 102</code> calculates $102 - \text{ADRESH}$, with C $= 0$ exactly when ADRESH $> 102$. The tests $40\,^{\circ}\mathrm{C}$ (ADRESH $= 102$) and $41\,^{\circ}\mathrm{C}$ (ADRESH $= 104$) check the limit.`, { hint: [R`Compare W with $102$ using <code>SUBLW 102</code> (Part 4).`, R`C $= 0$ means hotter than the limit: <code>BSF PORTD, 6</code>; otherwise <code>BCF PORTD, 6</code>.`] })
+      ]
+    },
+{
+      title: 'Challenge: a dimmer with a minimum',
+      objectives: ['You will connect the A/D converter and the PWM in one program'],
+      blocks: [
+        D.T(R`<p>A dimmer connects the two halves of this part: the A/D converter reads a potentiometer and the PWM sets the brightness of an LED. With PR2 $= 255$, the duty cycle is $\frac{\text{CCPR1L}}{256}$ (when the 2 low bits in CCP1CON are $0$), so the $8$ high bits of a left-justified conversion, ADRESH, can go straight into CCPR1L. Real dimmers often keep a minimum brightness, so that a lamp turned all the way down does not look broken.</p>`),
+        D.asm('A dimmer with a minimum', R`<p>Write the whole program. Set up the PWM on CCP1 (RC2) with PR2 $= 255$ and the Timer2 prescaler $16$, as in Activity 13, and the A/D converter on AN0 (ADCON1 can stay $0$: left justified). Then loop forever: convert AN0 and copy ADRESH into CCPR1L, but never less than $26$ (about $10\,\%$): if ADRESH is below $26$, use $26$.</p>`, {
+          start: 'LEVEL EQU 0x20\nA1    EQU 0x21\n\n; the setup\n\nLOOP:\n    ; read AN0, then set the brightness\n\n    GOTO LOOP\n',
+          tests: [
+            { name: R`$2.5\ \mathrm{V}$`, init: { analog: { 0: 2.5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 128, 'PWM1.ON': 1, 'PWM1.FREQ': [244, 244.3], TRISC2: 0 } },
+            { name: R`$1\ \mathrm{V}$`, init: { analog: { 0: 1 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 51, 'PWM1.ON': 1 } },
+            { name: R`$5\ \mathrm{V}$`, init: { analog: { 0: 5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 255 } },
+            { name: R`$0.2\ \mathrm{V}$: the minimum`, init: { analog: { 0: 0.2 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 26, 'PWM1.ON': 1 } },
+            { name: R`$1\ \mathrm{V}$, then $4\ \mathrm{V}$`, init: { analog: { 0: 1 } }, events: [{ step: 1500, analog: { 0: 4 } }], maxSteps: 3000, limitOk: true, expect: { CCPR1L: 204 } }],
+          solution: "LEVEL EQU 0x20\nA1    EQU 0x21\n\n    BANKSEL PR2\n    MOVLW   255\n    MOVWF   PR2         ; PWM period: 256 x 16 cycles\n    BCF     TRISC, 2    ; RC2 (CCP1) output\n    BANKSEL T2CON\n    MOVLW   00000111B\n    MOVWF   T2CON       ; Timer2 on, prescaler 16\n    MOVLW   00001100B\n    MOVWF   CCP1CON     ; CCP1 in PWM mode\n    MOVLW   01000001B\n    MOVWF   ADCON0      ; Fosc/8, AN0, converter on (ADCON1 = 0: left justified)\nLOOP:\n    MOVLW   5\n    MOVWF   A1\n    DECFSZ  A1, F       ; acquisition time\n    GOTO    $-1\n    BSF     ADCON0, 1   ; GO: start the conversion\n    BTFSC   ADCON0, 1   ; wait until it is finished\n    GOTO    $-1\n    MOVF    ADRESH, W\n    MOVWF   LEVEL\n    MOVLW   26\n    SUBWF   LEVEL, W    ; LEVEL - 26: C = 0 if LEVEL < 26\n    MOVLW   26\n    BTFSC   STATUS, 0\n    MOVF    LEVEL, W    ; LEVEL >= 26: keep it\n    MOVWF   CCPR1L      ; the brightness\n    GOTO    LOOP\n"
+        }, R`The setup comes from Activity 13 (PWM) and Activity 14 (A/D converter). In the loop, <code>SUBWF</code> compares the reading with $26$: C $= 0$ means it is smaller, and $26$ is used instead. $1\ \mathrm{V}$ gives about $\frac{1}{5} \times 1024 \approx 205$, so ADRESH $= 51$, a duty cycle of about $20\,\%$.`, { challenge: true, hint: [R`Setup: PR2 $= 255$ and TRISC2 $= 0$ (bank 1); T2CON $= 00000111_{2}$, CCP1CON $= 00001100_{2}$ and ADCON0 $= 01000001_{2}$ (bank 0).`, R`Loop: wait a few cycles (the acquisition time), <code>BSF ADCON0, 1</code> (GO), wait while it is $1$, then compare ADRESH with $26$ using <code>SUBWF</code> and copy the right value into CCPR1L.`] })
       ]
     }
   ]
@@ -4948,6 +5130,26 @@ $$\text{Baud} = \frac{F_{\text{osc}}}{16\,(SPBRG + 1)} \qquad\Rightarrow\qquad S
           solution: '    MOVF  PTR, W\n    MOVWF FSR           ; point to the next free place\n    MOVF  RCREG, W      ; read: clears RCIF\n    MOVWF INDF          ; store it\n    INCF  PTR, F\n    RETFIE\n'
         }, R`Each interrupt writes one character at the address in PTR and moves PTR forward: <code>HELLO</code> fills $30_{16} \ldots 34_{16}$ and PTR ends at $35_{16}$.`, { hint: R`<code>MOVF PTR, W</code>, <code>MOVWF FSR</code>, <code>MOVF RCREG, W</code>, <code>MOVWF INDF</code>, <code>INCF PTR, F</code>.` })
       ]
+    },
+{
+      title: 'Challenge: a number from the keyboard',
+      objectives: ['You will turn a sequence of received digit characters into a number'],
+      blocks: [
+        D.T(R`<p>A terminal program on the computer sends the keys you type one character at a time. The number $123$ arrives as the three characters <code>'1'</code>, <code>'2'</code> and <code>'3'</code>, followed by the Enter key, character $13$ (<code>'\r'</code>). The program builds the value digit by digit, the way you read a number from left to right:</p>
+$$N \leftarrow 10 \times N + \text{digit}: \qquad 0 \to 1 \to 12 \to 123.$$`),
+        D.asm('A number from the keyboard', R`<p>Receive numbers from the serial port; SETUP and USART_SEND are given, and you poll RCIF. For each digit character update $\text{N} \leftarrow 10 \times \text{N} + \text{digit}$, doing the multiplication by $10$ with shifts. When character $13$ arrives, show N on PORTD, send <code>OK</code> back, and start again with N $= 0$. The numbers are at most $255$.</p>`, {
+          pre: "CHAR EQU 0x20\nN    EQU 0x21\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n    RETFIE\n",
+          post: "\nSETUP:\n    CLRF  PORTD\n    BANKSEL TRISD\n    CLRF  TRISD         ; PORTD outputs\n    BCF   TRISC, 6      ; TX output\n    BSF   TRISC, 7      ; RX input\n    MOVLW 25\n    MOVWF SPBRG         ; 9600 baud at 4 MHz\n    MOVLW 00100100B\n    MOVWF TXSTA         ; transmitter on, BRGH = 1\n    BANKSEL RCSTA\n    MOVLW 10010000B     ; serial port on, continuous receive\n    MOVWF RCSTA\n    RETURN\n\nUSART_SEND:             ; sends the character in W\n    MOVWF TXREG\n    BSF   RP0\n    BTFSS TRMT          ; wait until it has left\n    GOTO  $-1\n    BCF   RP0\n    RETURN\n",
+          start: 'MAIN:\n    CALL SETUP\n    CLRF N\nWAIT:\n    ; wait for a character, then use it\n\n    GOTO WAIT\n',
+          tests: [
+            { name: '"123" and Enter', events: [{ step: 200, rx: '123\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 123, TX: 'OK' } },
+            { name: '"7", then "255"', events: [{ step: 200, rx: '7\r' }, { step: 9000, rx: '255\r' }], maxSteps: 30000, limitOk: true, at: [{ step: 8500, expect: { 'OUT.D': 7 }, label: 'after the first number' }], expect: { 'OUT.D': 255, TX: 'OKOK' } },
+            { name: '"0" and Enter', events: [{ step: 200, rx: '0\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 0, TX: 'OK' } },
+            { name: '"42", "9", "100"', events: [{ step: 200, rx: '42\r' }, { step: 9000, rx: '9\r' }, { step: 16000, rx: '100\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 100, TX: 'OKOKOK' } }],
+          reqs: [{ re: /\bRLF\b/i, msg: 'Multiply by 10 with RLF shifts.' }],
+          solution: "MAIN:\n    CALL  SETUP\n    CLRF  N\nWAIT:\n    BTFSS RCIF          ; wait for a character\n    GOTO  WAIT\n    MOVF  RCREG, W      ; read it: clears RCIF\n    MOVWF CHAR\n    XORLW 13            ; the end of the number?\n    BTFSC STATUS, 2\n    GOTO  DONE\n    BCF   STATUS, 0\n    RLF   N, F          ; 2N\n    MOVF  N, W          ; W = 2N\n    BCF   STATUS, 0\n    RLF   N, F          ; 4N\n    BCF   STATUS, 0\n    RLF   N, F          ; 8N\n    ADDWF N, F          ; 8N + 2N = 10N\n    MOVLW '0'\n    SUBWF CHAR, W       ; W = the value of the digit\n    ADDWF N, F          ; N = 10N + digit\n    GOTO  WAIT\nDONE:\n    MOVF  N, W\n    MOVWF PORTD         ; show the number\n    MOVLW 'O'\n    CALL  USART_SEND\n    MOVLW 'K'\n    CALL  USART_SEND\n    CLRF  N             ; ready for the next number\n    GOTO  WAIT\n"
+        }, R`$10\text{N} = 8\text{N} + 2\text{N}$: after the first shift W keeps $2\text{N}$, two more shifts give $8\text{N}$, and one addition gives $10\text{N}$. Each shift needs C $= 0$ first. <code>SUBWF CHAR, W</code> with W $=$ <code>'0'</code> turns the character into its value. Reading RCREG clears RCIF, so the loop then waits for the next character.`, { challenge: true, hint: [R`Loop: wait for RCIF and copy RCREG into CHAR. <code>XORLW 13</code> sets Z if it is the end of the number.`, R`For a digit: three <code>RLF N, F</code>, each after <code>BCF STATUS, 0</code>, keeping $2\text{N}$ in W after the first one, then <code>ADDWF N, F</code>. Then <code>MOVLW '0'</code>, <code>SUBWF CHAR, W</code> and <code>ADDWF N, F</code>.`] })
+      ]
     }
   ]
 });
@@ -5055,6 +5257,22 @@ D.part({
           solution: "MAIN:\n    CALL SETUP\nWAIT:\n    BTFSS RCIF\n    GOTO  WAIT\n    MOVF  RCREG, W\n    MOVWF CHAR\n    XORLW 'L'\n    BTFSC STATUS, 2\n    GOTO  LEFT\n    MOVF  CHAR, W\n    XORLW 'R'\n    BTFSC STATUS, 2\n    GOTO  RIGHT\n    MOVF  CHAR, W\n    XORLW 'S'\n    BTFSS STATUS, 2\n    GOTO  WAIT          ; unknown command\n    BCF   PORTD, 0      ; stop\n    BCF   PORTD, 1\n    GOTO  WAIT\nLEFT:\n    BCF   PORTD, 1      ; first switch off the other side\n    BSF   PORTD, 0\n    GOTO  WAIT\nRIGHT:\n    BCF   PORTD, 0\n    BSF   PORTD, 1\n    GOTO  WAIT\n"
         }, R`A case chain on the received character (Part 4). Each direction first clears the other line and only then sets its own, so IN1 and IN2 are never both $1$, not even for one instruction.`, { hint: [R`Read the character as in the code lock: <code>BTFSS RCIF</code>, <code>GOTO WAIT</code>, <code>MOVF RCREG, W</code>, <code>MOVWF CHAR</code>.`, R`Compare CHAR with <code>'L'</code>, <code>'R'</code> and <code>'S'</code> using <code>XORLW</code>; for L: <code>BCF PORTD, 1</code> then <code>BSF PORTD, 0</code>.`] }),
         D.T(R`<p><b>Congratulations!</b> You have reached the end of the course. You can now program the PIC16F887 in assembly: numbers and flags, all $35$ instructions, decisions and loops, exact delays, subroutines and tables, ports and buttons, multi-byte arithmetic, pointers and strings, interrupts, timers, PWM, the A/D converter, the LCD and the serial port. Before an exam, redo the exercises of Parts 3 and 14 on paper. Remember to <b>save your progress</b> to a file, and try the programs on a real PIC16F887 with MPLAB X when you can.</p>`)
+      ]
+    },
+{
+      title: 'Challenge: a lock with three tries',
+      objectives: ['You will combine a table, counters and the serial port in a small security device'],
+      blocks: [
+        D.T(R`<p>The code lock of Section 1 accepts the code anywhere in a stream of characters, so a burglar can simply type every combination one after the other. Real locks read codes of a fixed length and count the failures: after three wrong codes they raise an alarm and refuse to open, even for the right code.</p>`),
+        D.asm('A lock with three tries', R`<p>Characters arrive at the serial port (SETUP is given). Read them in groups of three: each group is one try.</p>
+<ul><li>If a group is the code <code>123</code>, light RD0 (the lock opens) and stop.</li><li>If not, count the wrong try. After the third wrong try, light RD1 (the alarm) and stop: no more characters are read, so even the right code no longer opens the lock.</li></ul>
+<p>Keep the code in a <code>RETLW</code> table called <code>CODE</code>, so it can be changed in one place, and compare each character with the table entry for its position. Stop with <code>GOTO $</code>.</p>`, {
+          pre: "CHAR  EQU 0x20\nPOS   EQU 0x21\nTRIES EQU 0x22\nWRONG EQU 0x23\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n    RETFIE\n", post: UART_RX_SETUP,
+          start: 'MAIN:\n    CALL SETUP\n    CLRF TRIES\n\n; read the tries\n\n    GOTO $\n',
+          tests: [['123', 1, 0], ['124', 0, 0], ['111222333', 0, 1], ['999888123', 1, 0], ['111222333123', 0, 1], ['124123', 1, 0], ['312', 0, 0]].map(([s, open, alarm]) => ({ name: '"' + s + '"', events: [{ step: 200, rx: s }], maxSteps: 12000, limitOk: true, expect: { RD0: open, RD1: alarm } })),
+          reqs: [{ re: /\bRETLW\b/i, msg: 'Keep the code in a RETLW table.' }],
+          solution: "MAIN:\n    CALL  SETUP\n    CLRF  TRIES\nNEW_TRY:\n    CLRF  POS           ; position in the code: 0, 1, 2\n    CLRF  WRONG         ; no mistake yet\nNEXT:\n    BTFSS RCIF          ; wait for a character\n    GOTO  NEXT\n    MOVF  RCREG, W\n    MOVWF CHAR\n    MOVF  POS, W\n    CALL  CODE          ; W = the character expected here\n    XORWF CHAR, W       ; Z = 1 if they are equal\n    BTFSS STATUS, 2\n    BSF   WRONG, 0      ; remember the mistake, but keep reading\n    INCF  POS, F\n    MOVF  POS, W\n    XORLW 3             ; three characters received?\n    BTFSS STATUS, 2\n    GOTO  NEXT\n    BTFSS WRONG, 0\n    GOTO  OPEN          ; no mistake: the right code\n    INCF  TRIES, F\n    MOVF  TRIES, W\n    XORLW 3             ; the third wrong code?\n    BTFSS STATUS, 2\n    GOTO  NEW_TRY\n    BSF   PORTD, 1      ; alarm, and accept nothing more\n    GOTO  $\nOPEN:\n    BSF   PORTD, 0      ; open the lock\n    GOTO  $\n\nCODE:                   ; W = 0, 1, 2 -> the characters of the code\n    ADDWF PCL, F\n    RETLW '1'\n    RETLW '2'\n    RETLW '3'\n"
+        }, R`A wrong character does not end the try early: the lock always reads three characters, so nobody can tell which digit was wrong. WRONG remembers a mistake until the end of the group, POS selects the expected character in the table, and TRIES counts the wrong groups.`, { challenge: true, hint: [R`Use POS ($0$, $1$, $2$), WRONG (set when a character differs) and TRIES. For each character: <code>MOVF POS, W</code>, <code>CALL CODE</code>, <code>XORWF CHAR, W</code>; if Z $= 0$, set WRONG.`, R`After the third character: without a mistake, <code>BSF PORTD, 0</code> and <code>GOTO $</code>. Otherwise <code>INCF TRIES, F</code>; if TRIES is $3$, <code>BSF PORTD, 1</code> and <code>GOTO $</code>; if not, clear POS and WRONG for the next try.`] })
       ]
     }
   ]
@@ -5315,7 +5533,7 @@ function renderPart(p) {
   art.append(el('div', { class: 'paper pis' }, el('div', { class: 'pis-t', text: 'In this part' }), el('ol', { class: 'pis-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', {}, el('a', { href: secHref(p, s) }, el('span', { class: 'pis-n', text: s.num }), el('span', { class: 'pis-x', text: s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + ' / ' + st.total }) : null)); }))));
   const exs = partExs(p);
   const det = el('details', { class: 'paper acc' }, el('summary', {}, el('span', { text: 'List of exercises in this part' }), el('span', { class: 'acc-ico', html: ICON.chevron })),
-    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
+    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
   art.append(det);
   return art;
 }
@@ -5373,7 +5591,7 @@ function renderAllExercises() {
     art.append(el('h2', { class: 'sec-h' }, el('a', { href: '#/' + p.slug, text: 'Part ' + p.num + ': ' }), el('span', { html: p.title }), el('small', { class: 'h-count', text: '  ' + st.done + ' / ' + st.total })));
     p.sections.forEach(s => {
       if (!s.exs.length) return;
-      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
+      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
     });
   });
   return art;

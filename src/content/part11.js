@@ -281,6 +281,18 @@ void main(void) {
 `
         }, '', { hint: R`<code>TMR1H = 3036 &gt;&gt; 8; TMR1L = 3036 &amp; 0xFF;</code> then <code>while (!TMR1IF);</code>` })
       ]
+    },
+{
+      title: 'Challenge: measure a pulse',
+      objectives: ['You will use Timer1 as a stopwatch to measure the length of a pulse'],
+      blocks: [
+        D.T(R`<p>Timer1 can also work as a stopwatch: switched on at the start of an event and off at its end, it holds the duration in instruction cycles, up to $65535$. Many sensors answer with a pulse whose length is the measurement; an ultrasonic distance sensor, for example, makes a pulse as long as the echo takes to come back. With a $4\ \mathrm{MHz}$ clock, one count of Timer1 without prescaler is $1\ \mu\mathrm{s}$.</p>`),
+        D.asm('Measure a pulse', R`<p>A pulse arrives on RD0, which is an input after a reset: the pin goes to $1$, stays there for a while, and goes back to $0$. Measure its length in instruction cycles with Timer1 (internal clock, prescaler $1$) and store it in WH:WL. Start counting from $0$: the timer holds an unknown value after a reset. The pulse lasts at most $65535$ cycles; a difference of a few cycles is accepted.</p>`, {
+          start: 'WH EQU 0x20\nWL EQU 0x21\n\n; write your code here\n\n    GOTO $\n',
+          tests: [1000, 300, 20000, 50000].map(w => ({ name: R`Pulse of $` + w + R`$ cycles`, init: { TMR1H: 0x12, TMR1L: 0x34, WH: 9, WL: 9 }, events: [{ at: 5000, pins: { D: 1 } }, { at: 5000 + w, pins: { D: 0 } }], maxSteps: 60000, limitOk: true, check: (r) => { const got = r.get('WH') * 256 + r.get('WL'); return Math.abs(got - w) <= 12 ? null : 'WH:WL is ' + got + ', but the pulse lasted ' + w + ' cycles.'; } })),
+          solution: "WH EQU 0x20\nWL EQU 0x21\n\n    CLRF  T1CON         ; Timer1 off: internal clock, prescaler 1\n    CLRF  TMR1H\n    CLRF  TMR1L\nWAIT_HIGH:\n    BTFSS PORTD, 0      ; wait for the start of the pulse\n    GOTO  WAIT_HIGH\n    BSF   T1CON, 0      ; TMR1ON: start counting\nWAIT_LOW:\n    BTFSC PORTD, 0      ; wait for the end of the pulse\n    GOTO  WAIT_LOW\n    BCF   T1CON, 0      ; stop\n    MOVF  TMR1H, W\n    MOVWF WH\n    MOVF  TMR1L, W\n    MOVWF WL\n    GOTO  $\n"
+        }, R`T1CON $= 0$ selects the instruction clock and prescaler $1$, and keeps the timer stopped while TMR1H and TMR1L are cleared. Each polling loop reacts within $3$ cycles, so the result differs from the real length by only a few cycles. Stopping the timer before reading it keeps the two bytes consistent: reading a running timer could give a high byte and a low byte from different moments.`, { challenge: true, hint: [R`Clear T1CON (Timer1 off, prescaler $1$, internal clock), TMR1H and TMR1L. Then wait for the pulse with <code>BTFSS PORTD, 0</code> and <code>GOTO $-1</code>.`, R`<code>BSF T1CON, 0</code> (TMR1ON) starts the timer. Wait for RD0 $= 0$, stop the timer with <code>BCF T1CON, 0</code>, and copy TMR1H into WH and TMR1L into WL.`] })
+      ]
     }
   ]
 });

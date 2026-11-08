@@ -245,6 +245,23 @@ a = a + b;`, R`    MOVF    BL, W
           solution: '    BCF STATUS, 0\n    RLF X, F\n    BCF STATUS, 0\n    RLF X, F\n    GOTO $'
         }, R`Each left shift multiplies by $2$: $X \times 2 \times 2 = 4X$. Clearing C makes the new bit 0 a zero.`, { hint: 'BCF STATUS, 0 then RLF X, F, twice.' })
       ]
+    },
+{
+      title: 'Challenge: an average that never overflows',
+      objectives: ['You will use bitwise operations to calculate without overflow'],
+      blocks: [
+        D.T(R`<p>The average of two numbers is $\frac{a + b}{2}$, but the sum may not fit in the type. For two <code>unsigned int</code> values ($16$ bits in XC8) the sum can reach $131070$, and the calculation wraps around: <code>(65535 + 65533) / 2</code> gives $32766$ instead of $65534$. A wider type such as <code>long</code> solves it, but for the widest type of a compiler there is nothing wider. A bit trick needs no extra bits at all:</p>
+$$a + b = 2 \times (a \text{ AND } b) + (a \text{ XOR } b)$$
+<p>The $1$ bits that the two numbers have in common count twice; the bits that differ count once.</p>`),
+        D.c('An average that never overflows', R`<p>Write a function <code>unsigned int average(unsigned int a, unsigned int b)</code> which returns the average of <code>a</code> and <code>b</code>, rounded down, for all values from $0$ to $65535$, without <code>long</code>, <code>float</code> or <code>double</code>.</p>`, {
+          start: R`unsigned int average(unsigned int a, unsigned int b) {
+
+}
+`, tests: [[10, 20], [65535, 65533], [65535, 65535], [0, 65535], [7, 8], [40000, 30000], [1, 0]].map(([a, b]) => ({ call: 'average', args: [a, b], ret: Math.floor((a + b) / 2) })),
+          forbid: [{ re: /\b(long|float|double)\b/, msg: 'Do not use long, float or double: the challenge is to stay within 16 bits.' }],
+          solution: "unsigned int average(unsigned int a, unsigned int b) {\n    return (a & b) + ((a ^ b) >> 1);   // the common bits, plus half of the different bits\n}\n"
+        }, R`The common $1$ bits, <code>a &amp; b</code>, appear in both numbers, so they count fully in the average; the bits that differ, <code>a ^ b</code>, appear once, so they count half: a shift right by $1$. Neither part can overflow. Another solution is <code>a / 2 + b / 2 + (a &amp; b &amp; 1)</code>, which adds back the $1$ that is lost when both numbers are odd.`, { challenge: true, hint: [R`Try $a = 6 = 110_{2}$ and $b = 3 = 011_{2}$: which bits are in both numbers, and which in only one of them?`, R`The bits in both numbers are <code>a &amp; b</code> and count fully; the bits in only one are <code>a ^ b</code> and count half.`] })
+      ]
     }
   ]
 });

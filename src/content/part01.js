@@ -387,6 +387,26 @@ printf("R = %d ohm\n", (5000 - v) / i);`)
           R`<code>scanf</code> must know <i>where</i> to store the number, so it needs <code>&amp;x</code>. Given only the (garbage) value of <code>x</code>, it would write somewhere random in memory. The simulator stops the program with an error message instead.`, { snippet: { text: R`int x;
 scanf("%d", x);`, lang: 'c' }, hint: 'Compare with the examples above: what is written in front of the variable name?' })
       ]
+    },
+{
+      title: 'Challenge: making change',
+      objectives: ['You will chain integer division and remainder to split a number into parts'],
+      blocks: [
+        D.T(R`<p>A vending machine must give change with as few coins as possible. Its coins are worth $100$, $50$, $25$, $10$, $5$ and $1$ fils. A cashier does it like this: take as many of the biggest coin as possible, then continue with what is left and the next coin. In C, integer division gives "as many as possible" and the remainder <code>%</code> gives "what is left":</p>
+$$388 = 3 \times 100 + 88, \qquad 88 = 1 \times 50 + 38, \qquad 38 = 1 \times 25 + 13, \qquad \ldots$$`),
+        D.c('Making change', R`<p>Write a program which asks for an amount in fils ($0$ to $30000$) and prints how many coins of each value the machine gives, from the biggest to the smallest, and the total number of coins, exactly in the format shown. Only <code>/</code> and <code>%</code> are needed: no <code>if</code> and no loops.</p>`, {
+          start: START, sample: R`Change in fils: [[388]]
+100: 3
+50: 1
+25: 1
+10: 1
+5: 0
+1: 3
+Coins: 9`,
+          tests: [[388, [3, 1, 1, 1, 0, 3]], [99, [0, 1, 1, 2, 0, 4]], [0, [0, 0, 0, 0, 0, 0]], [1000, [10, 0, 0, 0, 0, 0]], [41, [0, 0, 1, 1, 1, 1]], [240, [2, 0, 1, 1, 1, 0]]].map(([v, c]) => ({ name: String(v), stdin: v + '\n', out: 'Change in fils: ' + [100, 50, 25, 10, 5, 1].map((k, i) => k + ': ' + c[i] + '\n').join('') + 'Coins: ' + c.reduce((a, b) => a + b, 0) + '\n' })),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int fils, c100, c50, c25, c10, c5, c1;\n    printf(\"Change in fils: \");\n    scanf(\"%d\", &fils);\n    c100 = fils / 100;      // whole dirhams\n    fils = fils % 100;      // what is left\n    c50 = fils / 50;\n    fils = fils % 50;\n    c25 = fils / 25;\n    fils = fils % 25;\n    c10 = fils / 10;\n    fils = fils % 10;\n    c5 = fils / 5;\n    c1 = fils % 5;\n    printf(\"100: %d\\n\", c100);\n    printf(\"50: %d\\n\", c50);\n    printf(\"25: %d\\n\", c25);\n    printf(\"10: %d\\n\", c10);\n    printf(\"5: %d\\n\", c5);\n    printf(\"1: %d\\n\", c1);\n    printf(\"Coins: %d\\n\", c100 + c50 + c25 + c10 + c5 + c1);\n}\n"
+        }, R`Each division takes as many coins of one value as possible, and <code>%</code> keeps what is left for the smaller coins. The total is the sum of the six counts, so each count needs its own variable. This "greedy" method gives the fewest coins for these coin values; for some other sets of coins it does not.`, { challenge: true, hint: [R`<code>fils / 100</code> is the number of $100$-fils coins and <code>fils % 100</code> is what is left. Store it back in <code>fils</code> and continue with $50$.`, R`Keep each count in its own variable, so that you can print them and add them all up for the last line.`] })
+      ]
     }
   ]
 });

@@ -434,6 +434,26 @@ void main(void) {
 `
         }, '', { hint: [R`Read the character once: <code>char c = RCREG;</code>`, R`<code>USART_SEND</code> stops after the <code>'\r'</code> at the end of the phrase.`] })
       ]
+    },
+{
+      title: 'Challenge: a number from the keyboard',
+      objectives: ['You will turn a sequence of received digit characters into a number'],
+      blocks: [
+        D.T(R`<p>A terminal program on the computer sends the keys you type one character at a time. The number $123$ arrives as the three characters <code>'1'</code>, <code>'2'</code> and <code>'3'</code>, followed by the Enter key, character $13$ (<code>'\r'</code>). The program builds the value digit by digit, the way you read a number from left to right:</p>
+$$N \leftarrow 10 \times N + \text{digit}: \qquad 0 \to 1 \to 12 \to 123.$$`),
+        D.asm('A number from the keyboard', R`<p>Receive numbers from the serial port; SETUP and USART_SEND are given, and you poll RCIF. For each digit character update $\text{N} \leftarrow 10 \times \text{N} + \text{digit}$, doing the multiplication by $10$ with shifts. When character $13$ arrives, show N on PORTD, send <code>OK</code> back, and start again with N $= 0$. The numbers are at most $255$.</p>`, {
+          pre: "CHAR EQU 0x20\nN    EQU 0x21\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n    RETFIE\n",
+          post: "\nSETUP:\n    CLRF  PORTD\n    BANKSEL TRISD\n    CLRF  TRISD         ; PORTD outputs\n    BCF   TRISC, 6      ; TX output\n    BSF   TRISC, 7      ; RX input\n    MOVLW 25\n    MOVWF SPBRG         ; 9600 baud at 4 MHz\n    MOVLW 00100100B\n    MOVWF TXSTA         ; transmitter on, BRGH = 1\n    BANKSEL RCSTA\n    MOVLW 10010000B     ; serial port on, continuous receive\n    MOVWF RCSTA\n    RETURN\n\nUSART_SEND:             ; sends the character in W\n    MOVWF TXREG\n    BSF   RP0\n    BTFSS TRMT          ; wait until it has left\n    GOTO  $-1\n    BCF   RP0\n    RETURN\n",
+          start: 'MAIN:\n    CALL SETUP\n    CLRF N\nWAIT:\n    ; wait for a character, then use it\n\n    GOTO WAIT\n',
+          tests: [
+            { name: '"123" and Enter', events: [{ step: 200, rx: '123\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 123, TX: 'OK' } },
+            { name: '"7", then "255"', events: [{ step: 200, rx: '7\r' }, { step: 9000, rx: '255\r' }], maxSteps: 30000, limitOk: true, at: [{ step: 8500, expect: { 'OUT.D': 7 }, label: 'after the first number' }], expect: { 'OUT.D': 255, TX: 'OKOK' } },
+            { name: '"0" and Enter', events: [{ step: 200, rx: '0\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 0, TX: 'OK' } },
+            { name: '"42", "9", "100"', events: [{ step: 200, rx: '42\r' }, { step: 9000, rx: '9\r' }, { step: 16000, rx: '100\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 100, TX: 'OKOKOK' } }],
+          reqs: [{ re: /\bRLF\b/i, msg: 'Multiply by 10 with RLF shifts.' }],
+          solution: "MAIN:\n    CALL  SETUP\n    CLRF  N\nWAIT:\n    BTFSS RCIF          ; wait for a character\n    GOTO  WAIT\n    MOVF  RCREG, W      ; read it: clears RCIF\n    MOVWF CHAR\n    XORLW 13            ; the end of the number?\n    BTFSC STATUS, 2\n    GOTO  DONE\n    BCF   STATUS, 0\n    RLF   N, F          ; 2N\n    MOVF  N, W          ; W = 2N\n    BCF   STATUS, 0\n    RLF   N, F          ; 4N\n    BCF   STATUS, 0\n    RLF   N, F          ; 8N\n    ADDWF N, F          ; 8N + 2N = 10N\n    MOVLW '0'\n    SUBWF CHAR, W       ; W = the value of the digit\n    ADDWF N, F          ; N = 10N + digit\n    GOTO  WAIT\nDONE:\n    MOVF  N, W\n    MOVWF PORTD         ; show the number\n    MOVLW 'O'\n    CALL  USART_SEND\n    MOVLW 'K'\n    CALL  USART_SEND\n    CLRF  N             ; ready for the next number\n    GOTO  WAIT\n"
+        }, R`$10\text{N} = 8\text{N} + 2\text{N}$: after the first shift W keeps $2\text{N}$, two more shifts give $8\text{N}$, and one addition gives $10\text{N}$. Each shift needs C $= 0$ first. <code>SUBWF CHAR, W</code> with W $=$ <code>'0'</code> turns the character into its value. Reading RCREG clears RCIF, so the loop then waits for the next character.`, { challenge: true, hint: [R`Loop: wait for RCIF and copy RCREG into CHAR. <code>XORLW 13</code> sets Z if it is the end of the number.`, R`For a digit: three <code>RLF N, F</code>, each after <code>BCF STATUS, 0</code>, keeping $2\text{N}$ in W after the first one, then <code>ADDWF N, F</code>. Then <code>MOVLW '0'</code>, <code>SUBWF CHAR, W</code> and <code>ADDWF N, F</code>.`] })
+      ]
     }
   ]
 });

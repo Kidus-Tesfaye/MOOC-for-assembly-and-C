@@ -500,6 +500,17 @@ table.regs th{background:var(--surface-2);font:600 12.5px var(--sans)}
 .modal-b p{font:14.5px/1.6 var(--sans);color:var(--text);margin:0 0 10px}
 .modal-btns{display:flex;justify-content:flex-end;gap:8px;margin:16px 0 4px}
 
+/* ---------- challenge exercises ---------- */
+.ex-card.challenge{border-color:#f5d28a}
+.ex-card.challenge .ex-head{background:linear-gradient(180deg,#fff6df,var(--surface) 150%);border-top:4px solid #f59e0b}
+.ex-card.challenge .ex-ico{background:linear-gradient(135deg,#f59e0b,#e8590c);box-shadow:0 6px 14px -6px #e8590c}
+.ex-card.challenge .ex-kind{color:#b45309}
+.acc-k.ch{background:#fff3d6;color:#92400e}
+html[data-mode=dark] .ex-card.challenge{border-color:#5c4410}
+html[data-mode=dark] .ex-card.challenge .ex-head{background:linear-gradient(180deg,#2b200b,var(--surface) 150%)}
+html[data-mode=dark] .ex-card.challenge .ex-kind{color:#fbbf24}
+html[data-mode=dark] .acc-k.ch{background:#3a2a0c;color:#fcd34d}
+
 /* ---------- notes on the course text ---------- */
 mark.note-mark{position:relative;background:#ffe866;color:#1f1d0b;border-radius:2px;padding:.04em 0;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background .2s}
 mark.note-mark:hover,mark.note-mark.active{background:#ffd93b}
@@ -3941,7 +3952,7 @@ function buildExercise(ex, hooks) {
   const hints = [].concat(ex.hint || []);
   let hintShown = 0;
   const isProg = ex.type === 'code';
-  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
+  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (ex.challenge ? ' challenge' : '') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
   const fb = el('div', { class: 'fb', 'aria-live': 'polite' });
   const hintBox = el('div', { class: 'fb hint' });
   const solBox = el('div', { class: 'fb sol' });
@@ -3950,8 +3961,8 @@ function buildExercise(ex, hooks) {
   ctx.check = () => doCheck();
   const pts = el('span', { class: 'pt-got', text: saved.done ? '1' : '0' });
   const head = el('div', { class: 'ex-head' },
-    el('span', { class: 'ex-ico', html: MOOC.ICON[isProg ? 'pencil' : 'quiz'] }),
-    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: isProg ? 'Programming exercise · ' + (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz' }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
+    el('span', { class: 'ex-ico', html: MOOC.ICON[ex.challenge ? 'star' : (isProg ? 'pencil' : 'quiz')] }),
+    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: (ex.challenge ? 'Challenge · ' : (isProg ? 'Programming exercise · ' : '')) + (isProg ? (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz') }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
     el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
   const body = el('div', { class: 'ex-body' });
   body.append(el('div', { class: 'q', html: ex.q }));
@@ -4276,6 +4287,7 @@ D.page({
 <ul>
 <li><b>Programming exercises</b> (the cards with a pencil) ask you to write C or assembly code. Press <b>Run</b> to try your program and <b>Test</b> to check it with the automatic tests. A C program runs in a C interpreter that follows the rules of XC8; an assembly program runs in a simulator of the PIC16F887 with its ports, timers, A/D converter, serial port and an LCD.</li>
 <li><b>Quizzes</b> (the cards with a question mark) check that you understood the ideas: multiple choice, short answers, filling in code, tracing a program step by step.</li>
+<li><b>Challenges</b> (the gold cards with a star) end every part: a harder C or assembly exercise that combines the ideas of the part and sometimes goes beyond the lecture slides. Try them when the rest of the part feels easy.</li>
 <li><b>Notes:</b> select any text of the course and choose <b>Add note</b> to write your own note about it. The text is highlighted in yellow; click it to read or change the note. All your notes are listed under <a href="#/notes">All notes</a> in the menu, each with a link to its place in the course.</li>
 <li>Every exercise is worth <b>1 point</b>. Wrong answers cost nothing; try as many times as you need. A hint is always available, and the model solution can be opened after your first attempt.</li>
 </ul>`),
@@ -4699,6 +4711,26 @@ printf("R = %d ohm\n", (5000 - v) / i);`)
           R`<code>scanf</code> must know <i>where</i> to store the number, so it needs <code>&amp;x</code>. Given only the (garbage) value of <code>x</code>, it would write somewhere random in memory. The simulator stops the program with an error message instead.`, { snippet: { text: R`int x;
 scanf("%d", x);`, lang: 'c' }, hint: 'Compare with the examples above: what is written in front of the variable name?' })
       ]
+    },
+{
+      title: 'Challenge: making change',
+      objectives: ['You will chain integer division and remainder to split a number into parts'],
+      blocks: [
+        D.T(R`<p>A vending machine must give change with as few coins as possible. Its coins are worth $100$, $50$, $25$, $10$, $5$ and $1$ fils. A cashier does it like this: take as many of the biggest coin as possible, then continue with what is left and the next coin. In C, integer division gives "as many as possible" and the remainder <code>%</code> gives "what is left":</p>
+$$388 = 3 \times 100 + 88, \qquad 88 = 1 \times 50 + 38, \qquad 38 = 1 \times 25 + 13, \qquad \ldots$$`),
+        D.c('Making change', R`<p>Write a program which asks for an amount in fils ($0$ to $30000$) and prints how many coins of each value the machine gives, from the biggest to the smallest, and the total number of coins, exactly in the format shown. Only <code>/</code> and <code>%</code> are needed: no <code>if</code> and no loops.</p>`, {
+          start: START, sample: R`Change in fils: [[388]]
+100: 3
+50: 1
+25: 1
+10: 1
+5: 0
+1: 3
+Coins: 9`,
+          tests: [[388, [3, 1, 1, 1, 0, 3]], [99, [0, 1, 1, 2, 0, 4]], [0, [0, 0, 0, 0, 0, 0]], [1000, [10, 0, 0, 0, 0, 0]], [41, [0, 0, 1, 1, 1, 1]], [240, [2, 0, 1, 1, 1, 0]]].map(([v, c]) => ({ name: String(v), stdin: v + '\n', out: 'Change in fils: ' + [100, 50, 25, 10, 5, 1].map((k, i) => k + ': ' + c[i] + '\n').join('') + 'Coins: ' + c.reduce((a, b) => a + b, 0) + '\n' })),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int fils, c100, c50, c25, c10, c5, c1;\n    printf(\"Change in fils: \");\n    scanf(\"%d\", &fils);\n    c100 = fils / 100;      // whole dirhams\n    fils = fils % 100;      // what is left\n    c50 = fils / 50;\n    fils = fils % 50;\n    c25 = fils / 25;\n    fils = fils % 25;\n    c10 = fils / 10;\n    fils = fils % 10;\n    c5 = fils / 5;\n    c1 = fils % 5;\n    printf(\"100: %d\\n\", c100);\n    printf(\"50: %d\\n\", c50);\n    printf(\"25: %d\\n\", c25);\n    printf(\"10: %d\\n\", c10);\n    printf(\"5: %d\\n\", c5);\n    printf(\"1: %d\\n\", c1);\n    printf(\"Coins: %d\\n\", c100 + c50 + c25 + c10 + c5 + c1);\n}\n"
+        }, R`Each division takes as many coins of one value as possible, and <code>%</code> keeps what is left for the smaller coins. The total is the sum of the six counts, so each count needs its own variable. This "greedy" method gives the fewest coins for these coin values; for some other sets of coins it does not.`, { challenge: true, hint: [R`<code>fils / 100</code> is the number of $100$-fils coins and <code>fils % 100</code> is what is left. Store it back in <code>fils</code> and continue with $50$.`, R`Keep each count in its own variable, so that you can print them and add them all up for the last line.`] })
+      ]
     }
   ]
 });
@@ -5029,6 +5061,21 @@ void main(void) {
 `
         }, '', { hint: [R`Copy <code>s</code> into an <code>unsigned char</code> variable: the bits stay the same, only the meaning changes.`, R`Print the unsigned copy with <code>%d</code> and with <code>%X</code>.`] })
       ]
+    },
+{
+      title: 'Challenge: a byte in binary',
+      objectives: ['You will extract the bits of a number with arithmetic', 'You will calculate a two\'s complement value'],
+      blocks: [
+        D.T(R`<p><code>printf</code> prints numbers in decimal (<code>%d</code>) and in hexadecimal (<code>%X</code>), but it has no format for binary. You can build the binary digits yourself: dividing by $2^{k}$ moves bit $k$ down to bit 0, and <code>% 2</code> keeps only that bit. For $165 = 1010\,0101_{2}$:</p>
+$$\left\lfloor \frac{165}{32} \right\rfloor = 5 = 101_{2}, \qquad 5 \bmod 2 = 1, \qquad \text{so bit 5 is } 1.$$`),
+        D.c('A byte in binary', R`<p>Write a program which asks for a number from $0$ to $255$ and prints its $8$ bits, and then the value of the same $8$ bits read as a <code>signed char</code> (two's complement), exactly in the format shown. Calculate both with arithmetic: no <code>if</code> and no loops are needed.</p>`, {
+          start: START, sample: R`Number (0-255): [[165]]
+Binary: 10100101
+Signed: -91`,
+          tests: [165, 0, 255, 128, 127, 6].map(v => ({ name: String(v), stdin: v + '\n', out: 'Number (0-255): Binary: ' + H.b8(v) + '\nSigned: ' + (v > 127 ? v - 256 : v) + '\n' })),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int n;\n    printf(\"Number (0-255): \");\n    scanf(\"%d\", &n);\n    printf(\"Binary: %d%d%d%d\", n / 128 % 2, n / 64 % 2, n / 32 % 2, n / 16 % 2);\n    printf(\"%d%d%d%d\\n\", n / 8 % 2, n / 4 % 2, n / 2 % 2, n % 2);\n    printf(\"Signed: %d\\n\", n - 256 * (n / 128));   // bit 7 is worth -128, not +128\n}\n"
+        }, R`<code>n / 128 % 2</code> is bit 7, <code>n / 64 % 2</code> is bit 6, and so on down to <code>n % 2</code>, which is bit 0. In two's complement bit 7 is worth $-128$ instead of $+128$, so the signed value is $n - 256$ when bit 7 is $1$: <code>n - 256 * (n / 128)</code>. A cast, <code>(signed char)n</code>, gives the same value.`, { challenge: true, hint: [R`<code>n / 128</code> is $1$ exactly when bit 7 is $1$. For bit 6, divide by $64$ and keep the last bit with <code>% 2</code>.`, R`A <code>printf</code> with several <code>%d</code> prints the digits next to each other. For the signed value: bit 7 is worth $-128$, so subtract $256$ when it is $1$.`] })
+      ]
     }
   ]
 });
@@ -5239,6 +5286,19 @@ PSECT BLABLA,CLASS=CODE, DELTA=2,ABS
         D.asm('Labels and GOTO', R`<p>Complete the program: after the label <code>START</code>, load $7$ into W and store it in REG1, then jump to the label <code>FINISH</code> with <code>GOTO</code>. The instructions between are skipped. At <code>FINISH</code> the program stops.</p>`, {
           pre: 'REG1 EQU 0x20\nREG2 EQU 0x21', start: 'START:\n    ; load 7 into REG1 and jump to FINISH\n\n    MOVLW 99\n    MOVWF REG2      ; must be skipped\nFINISH:\n    GOTO $\n', tests: [{ expect: { REG1: 7, REG2: 0 } }], reqs: [{ re: /GOTO\s+FINISH/i, msg: 'Jump with GOTO FINISH.' }], solution: 'START:\n    MOVLW 7\n    MOVWF REG1\n    GOTO FINISH\n    MOVLW 99\n    MOVWF REG2\nFINISH:\n    GOTO $\n'
         }, 'GOTO FINISH writes the address of FINISH into the program counter, so the two instructions in between never execute.', { hint: 'Insert MOVLW 7, MOVWF REG1 and GOTO FINISH before MOVLW 99.' })
+      ]
+    },
+{
+      title: 'Challenge: rotate by one hexadecimal digit',
+      objectives: ['You will combine SWAPF, masks and IORWF to move digits between two registers'],
+      blocks: [
+        D.T(R`<p>A 16-bit number is stored in two registers, HI and LO, as four hexadecimal digits: $1234_{16}$ is HI $= 12_{16}$ and LO $= 34_{16}$. <b>Rotating</b> it by one digit to the left moves every digit one place left and brings the first digit round to the end: $1234_{16}$ becomes $2341_{16}$. Each new byte is made of one digit of HI and one digit of LO, so you must take the nibbles apart and put them back together.</p>`),
+        D.asm('Rotate by one hexadecimal digit', R`<p>Rotate the 16-bit number HI:LO by one hexadecimal digit to the left, as described above, and leave the result in HI:LO. TMPH and TMPL are free for intermediate results. Use <code>SWAPF</code>, <code>ANDLW</code>, <code>IORWF</code>, <code>MOVF</code> and <code>MOVWF</code>.</p>`, {
+          start: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [0x1234, 0xABCD, 0x00FF, 0xF00F, 0x5A3C].map(v => { const r = ((v << 4) | (v >> 12)) & 0xFFFF; const hx = (x) => x.toString(16).toUpperCase().padStart(4, '0'); return { name: R`$` + hx(v) + R`_{16} \to ` + hx(r) + R`_{16}$`, init: { HI: v >> 8, LO: v & 255 }, expect: { HI: r >> 8, LO: r & 255 } }; }),
+          reqs: [{ re: /\bSWAPF\b/i, msg: 'Use SWAPF to move the nibbles.' }],
+          solution: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n    SWAPF HI, W       ; 12 -> 21\n    ANDLW 0xF0        ; 20: the 2nd digit, now high\n    MOVWF TMPH\n    SWAPF LO, W       ; 34 -> 43\n    ANDLW 0x0F        ; 03: the 3rd digit, now low\n    IORWF TMPH, F     ; TMPH = 23\n    SWAPF LO, W       ; 43\n    ANDLW 0xF0        ; 40: the 4th digit, now high\n    MOVWF TMPL\n    SWAPF HI, W       ; 21\n    ANDLW 0x0F        ; 01: the 1st digit, now low\n    IORWF TMPL, W     ; 41\n    MOVWF LO\n    MOVF  TMPH, W\n    MOVWF HI          ; HI:LO = 2341\n    GOTO $\n'
+        }, R`For $1234_{16}$ the new high byte is the 2nd and 3rd digits ($23_{16}$) and the new low byte the 4th and 1st digits ($41_{16}$). <code>SWAPF</code> moves a digit to the other half of the byte, <code>ANDLW</code> keeps only the wanted half, and <code>IORWF</code> joins two halves. Build both new bytes in TMPH and TMPL before you overwrite HI and LO.`, { challenge: true, hint: [R`Write the four digits $1, 2, 3, 4$: the new HI is $23$ and the new LO is $41$.`, R`The new HI is (HI with its nibbles swapped, AND $F0_{16}$) OR (LO with its nibbles swapped, AND $0F_{16}$). Build it in TMPH; then build the new LO in the same way.`] })
       ]
     }
   ]
@@ -5541,6 +5601,18 @@ switch (d) {
           tests: [{ name: 'SW = 1001', init: { SW: 9 }, expect: { LEDS: 7 } }, { name: 'SW = 0111', init: { SW: 7 }, expect: { LEDS: 4 } }, { name: 'SW = 1100', init: { SW: 12 }, expect: { LEDS: 3 } }, { name: 'SW = 0110', init: { SW: 6, LEDS: 99 }, expect: { LEDS: 0 } }],
           solution: '    MOVF SW, W\n    XORLW 00001001B\n    BTFSC ZERO\n    GOTO CASE1\n    MOVF SW, W\n    XORLW 00000111B\n    BTFSC ZERO\n    GOTO CASE2\n    MOVF SW, W\n    XORLW 00001100B\n    BTFSC ZERO\n    GOTO CASE3\n    MOVLW 00000000B\n    GOTO STORE\nCASE1:\n    MOVLW 00000111B\n    GOTO STORE\nCASE2:\n    MOVLW 00000100B\n    GOTO STORE\nCASE3:\n    MOVLW 00000011B\nSTORE:\n    MOVWF LEDS\n    GOTO $'
         }, 'Each case reloads SW into W, XORs it with the case value and jumps to its own label when Z = 1; all paths end at STORE.', { hint: [R`Copy the chain shown above and add the third case.`, R`Reload SW before every <code>XORLW</code>: the XOR changed W.`] })
+      ]
+    },
+{
+      title: 'Challenge: sort three numbers',
+      objectives: ['You will chain comparisons and exchanges to sort values'],
+      blocks: [
+        D.T(R`<p>Sorting is one of the most common tasks in programming. For three numbers a short recipe is enough: compare the first two and exchange them if they are in the wrong order, do the same with the last two, and then once more with the first two. Each step is a comparison (Section 3) followed by an exchange through a temporary register: copy A to TEMP, B to A, and TEMP to B, each copy through W.</p>`),
+        D.asm('Sort three numbers', R`<p>Sort the unsigned numbers in A, B and C1 so that at the end $\text{A} \leq \text{B} \leq \text{C1}$. TEMP is free. The tests try every possible order, and equal values.</p>`, {
+          start: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[10, 20, 30], [10, 30, 20], [20, 10, 30], [20, 30, 10], [30, 10, 20], [30, 20, 10], [5, 5, 1], [255, 0, 128]].map(v => { const s = v.slice().sort((x, y) => x - y); return { name: R`$` + v.join(R`,\ `) + R`$`, init: { A: v[0], B: v[1], C1: v[2] }, expect: { A: s[0], B: s[1], C1: s[2] } }; }),
+          solution: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n    MOVF  A, W        ; A and B\n    SUBWF B, W        ; B - A: C = 0 if B < A\n    BTFSC STATUS, 0\n    GOTO  AB_OK\n    MOVF  A, W        ; exchange A and B\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nAB_OK:\n    MOVF  B, W        ; B and C1\n    SUBWF C1, W\n    BTFSC STATUS, 0\n    GOTO  BC_OK\n    MOVF  B, W\n    MOVWF TEMP\n    MOVF  C1, W\n    MOVWF B\n    MOVF  TEMP, W\n    MOVWF C1\nBC_OK:\n    MOVF  A, W        ; A and B once more\n    SUBWF B, W\n    BTFSC STATUS, 0\n    GOTO  DONE\n    MOVF  A, W\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nDONE:\n    GOTO $\n'
+        }, R`The first two steps carry the biggest value to C1; the third step puts the other two in order. $B - A$ with C $= 0$ means $B < A$, the only case that needs an exchange; equal values stay where they are.`, { challenge: true, hint: [R`Write one "compare and exchange" block for A and B: <code>MOVF A, W</code>, <code>SUBWF B, W</code>, skip the exchange when C $= 1$.`, R`Repeat the block for B and C1, then once more for A and B.`] })
       ]
     }
   ]
@@ -5856,6 +5928,20 @@ void main(void) {
         D.mc('Why _XTAL_FREQ?', 'Why must a C program define <code>_XTAL_FREQ</code> before using <code>__delay_ms</code>?', ['The macro converts milliseconds into instruction cycles, which depends on the oscillator frequency', 'It sets the oscillator of the chip to that frequency', 'It is only a comment', 'It enables the timers'], 0, 'The define only informs the compiler; the frequency itself is selected with OSCCON and the configuration bits.', { hint: 'Does #define change any register?' }),
         D.num('Period of 1 Hz', R`<p>An LED blinks at $2\ \mathrm{Hz}$ with equal on and off times. How long is it on, in milliseconds?</p>`, 250, R`$T = \frac{1}{2\ \mathrm{Hz}} = 500\ \mathrm{ms}$ and the LED is on for $\frac{T}{2} = 250\ \mathrm{ms}$.`, { unit: 'ms', hint: R`First find the period $T = \frac{1}{f}$.` })
       ]
+    },
+{
+      title: 'Challenge: prime numbers',
+      objectives: ['You will combine two nested loops, a flag and break'],
+      blocks: [
+        D.T(R`<p>A <b>prime number</b> has exactly two divisors, $1$ and itself: $2, 3, 5, 7, 11, \ldots$ To test whether $k$ is prime, try to divide it by $2, 3, 4, \ldots$: if a division leaves no remainder, $k$ is not prime. It is enough to try the divisors $d$ with $d \times d \leq k$, because if $k = d \times e$ with $d \leq e$, then $d \times d \leq k$. For $k = 97$ that is $8$ trials instead of $95$.</p>`),
+        D.c('Prime numbers', R`<p>Write a program which asks for a number N ($2 \leq N \leq 500$) and prints all prime numbers from $2$ to N on one line, each followed by a space, and then how many there are, exactly in the format shown.</p>`, {
+          start: START, sample: R`N: [[30]]
+2 3 5 7 11 13 17 19 23 29
+Primes: 10`,
+          tests: [30, 2, 10, 97, 100, 500].map(n => { const ps = []; for (let k = 2; k <= n; k++) { let p = true; for (let d = 2; d * d <= k; d++) if (k % d === 0) { p = false; break; } if (p) ps.push(k); } return { name: 'N = ' + n, stdin: n + '\n', out: 'N: ' + ps.join(' ') + '\nPrimes: ' + ps.length + '\n' }; }),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int n, k, d, prime, count = 0;\n    printf(\"N: \");\n    scanf(\"%d\", &n);\n    for (k = 2; k <= n; k++) {\n        prime = 1;\n        for (d = 2; d * d <= k; d++) {   // a divisor bigger than the square root has a partner below it\n            if (k % d == 0) {\n                prime = 0;\n                break;\n            }\n        }\n        if (prime) {\n            printf(\"%d \", k);\n            count++;\n        }\n    }\n    printf(\"\\nPrimes: %d\\n\", count);\n}\n"
+        }, R`Two nested loops: the outer one goes through the candidates $k$, the inner one through the divisors $d$. The flag <code>prime</code> starts at $1$ and becomes $0$ when a divisor is found, and <code>break</code> then stops the inner loop early. A counter adds one for every prime.`, { challenge: true, hint: [R`Outer loop <code>for (k = 2; k &lt;= n; k++)</code>. Inside it, set <code>prime = 1</code> and loop over the divisors <code>d</code>.`, R`Inner loop <code>for (d = 2; d * d &lt;= k; d++)</code>: if <code>k % d == 0</code>, set <code>prime = 0</code> and <code>break</code>. After it, if <code>prime</code> is still $1$, print <code>k</code> and count it.`] })
+      ]
     }
   ]
 });
@@ -6167,6 +6253,30 @@ void main(void) {
         D.tf('CONFIG in RAM', 'The configuration words are located in the RAM.', false, 'They are stored with the program in the chip, not in the RAM, and the program does not change them while it runs.', { hint: 'Are they changed while the program runs?' }),
         D.mc('Which is true?', 'Which statement matches the conclusions of Lecture 8?', ['In assembly you know exactly how long each instruction takes; in C you cannot predict the execution time exactly', 'C programs always run faster than assembly', 'In C you must select the RAM banks yourself', 'Assembly code is always placed by the compiler'], 0, 'C is easier, assembly gives direct control and exact timing.', { hint: 'Which language shows every instruction that is executed?' }),
         D.fill('The C template', 'Complete the skeleton of a C program for the PIC.', '#include <{{xc.h}}>\n#define {{_XTAL_FREQ}} 4000000\n\nvoid {{setup}}() {\n    OSCCON = 0b01100000;\n}\n\nvoid main(void) {\n    setup();\n    {{while}} (1) {\n    }\n}', 'xc.h gives the register names, _XTAL_FREQ the clock for the delays, setup configures the chip and while (1) repeats forever.', { lang: 'c', cs: true, hint: 'Look at the template above.' })
+      ]
+    },
+{
+      title: 'Challenge: Euclid\'s algorithm',
+      objectives: ['You will write a function that uses another function', 'You will avoid an overflow with the order of the operations'],
+      blocks: [
+        D.T(R`<p>The <b>greatest common divisor</b> $\gcd(a, b)$ is the biggest number that divides both $a$ and $b$: $\gcd(12, 18) = 6$. Euclid described a fast way to find it more than $2000$ years ago: replace the pair $(a, b)$ by $(b, a \bmod b)$ until $b$ is $0$; then $a$ is the answer.</p>
+$$(18, 12) \to (12, 6) \to (6, 0) \qquad \Rightarrow \qquad \gcd(18, 12) = 6$$
+<p>The <b>least common multiple</b>, the smallest number that both $a$ and $b$ divide, follows from it: $\operatorname{lcm}(a, b) = \frac{a}{\gcd(a, b)} \times b$, for example $\operatorname{lcm}(4, 6) = \frac{4}{2} \times 6 = 12$.</p>`),
+        D.c('Euclid\'s algorithm', R`<p>Write two functions:</p>
+<ul><li><code>unsigned int gcd(unsigned int a, unsigned int b)</code> returns $\gcd(a, b)$, calculated with Euclid's method ($a$ and $b$ are never both $0$);</li>
+<li><code>unsigned long lcm(unsigned int a, unsigned int b)</code> returns $\operatorname{lcm}(a, b)$ for $a, b > 0$, using <code>gcd</code>.</li></ul>
+<p>Remember that an <code>int</code> has $16$ bits in XC8: $\operatorname{lcm}(1000, 999) = 999000$ does not fit in one.</p>`, {
+          start: R`unsigned int gcd(unsigned int a, unsigned int b) {
+
+}
+
+unsigned long lcm(unsigned int a, unsigned int b) {
+
+}
+`, tests: [{ call: 'gcd', args: [12, 18], ret: 6 }, { call: 'gcd', args: [17, 5], ret: 1 }, { call: 'gcd', args: [0, 7], ret: 7 }, { call: 'gcd', args: [100, 75], ret: 25 }, { call: 'gcd', args: [65535, 255], ret: 255 },
+            { call: 'lcm', args: [4, 6], ret: 12 }, { call: 'lcm', args: [21, 6], ret: 42 }, { call: 'lcm', args: [7, 7], ret: 7 }, { call: 'lcm', args: [1000, 999], ret: 999000 }, { call: 'lcm', args: [65535, 2], ret: 131070 }],
+          solution: "unsigned int gcd(unsigned int a, unsigned int b) {\n    unsigned int r;\n    while (b != 0) {\n        r = a % b;          // gcd(a, b) = gcd(b, a % b)\n        a = b;\n        b = r;\n    }\n    return a;\n}\n\nunsigned long lcm(unsigned int a, unsigned int b) {\n    return (unsigned long)(a / gcd(a, b)) * b;   // divide first, multiply in 32 bits\n}\n"
+        }, R`A number that divides $a$ and $b$ also divides $a \bmod b$, so every step keeps the same common divisors while the numbers get smaller; when the remainder is $0$, the other number is the gcd. In <code>lcm</code>, dividing first keeps the numbers small, and the cast to <code>unsigned long</code> makes the multiplication use $32$ bits. Without it, $999 \times 1000$ would be calculated in $16$ bits and wrap around.`, { challenge: true, hint: [R`gcd: <code>while (b != 0)</code>, calculate <code>r = a % b</code>, then <code>a = b</code> and <code>b = r</code>. After the loop, return <code>a</code>.`, R`lcm: divide <code>a</code> by <code>gcd(a, b)</code> first, then multiply by <code>b</code> in $32$ bits: cast one operand to <code>unsigned long</code> before the multiplication.`] })
       ]
     }
   ]
@@ -6514,6 +6624,23 @@ void main(void) {
           solution: '    BSF STATUS, 5\n    BCF TRISC, 0\n    BCF STATUS, 5\n    BSF PORTC, 0\n    GOTO $\n'
         }, 'BCF TRISC, 0 clears only bit 0; the other pins stay inputs.', { hint: 'BCF works on one bit only. Remember the bank of TRISC.' })
       ]
+    },
+{
+      title: 'Challenge: three buttons and a counter',
+      objectives: ['You will detect the moment a button is pressed by comparing the port with its previous value'],
+      blocks: [
+        D.T(R`<p>Activity 4 waits for a press, then for the release. With several buttons that no longer works: while the program waits for one button, it misses the others. The usual solution is <b>edge detection</b>. Read the whole port in every round, and compare it with the value of the previous round:</p>
+$$\text{pressed now} = \text{NOW AND NOT OLD}.$$
+<p>A bit is $1$ only in the round in which that button went from released to pressed, so a button held down for a long time counts only once. Then copy NOW into OLD for the next round.</p>`),
+        D.asm('Three buttons and a counter', R`<p>Three active-high buttons are connected to RB1, RB2 and RB3, and eight LEDs to PORTD, which shows COUNT. Each <b>press</b> (not each round while held) of RB1 adds $1$ to COUNT, of RB2 subtracts $1$ (but never below $0$), and of RB3 resets COUNT to $0$. Configure the pins yourself: PORTD outputs, and the PORTB pins digital (they are analog after a reset). Then loop forever.</p>`, {
+          start: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n; configure the pins, then loop forever\n\nLOOP:\n\n    GOTO LOOP\n',
+          tests: [
+            { name: 'Three presses of RB1, held down', events: [[100, 2], [180, 0], [260, 2], [340, 0], [420, 2], [500, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 3, 'OUT.D': 3 } },
+            { name: 'Up three times, down once', events: [[100, 2], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 4], [480, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 2, 'OUT.D': 2 } },
+            { name: 'Down at zero, up twice, reset, up', events: [[100, 4], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 8], [440, 0], [500, 2], [540, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 800, limitOk: true, expect: { COUNT: 1, 'OUT.D': 1 } }],
+          solution: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n    BANKSEL ANSELH\n    CLRF    ANSELH        ; PORTB digital\n    BANKSEL TRISD\n    CLRF    TRISD         ; PORTD outputs\n    BANKSEL PORTD\n    CLRF    COUNT\n    CLRF    OLD\nLOOP:\n    MOVF    PORTB, W\n    MOVWF   NOW\n    COMF    OLD, W        ; NOT OLD\n    ANDWF   NOW, W        ; buttons pressed in this round\n    MOVWF   EDGES\n    MOVF    NOW, W\n    MOVWF   OLD           ; remember for the next round\n    BTFSC   EDGES, 1      ; RB1: plus one\n    INCF    COUNT, F\n    BTFSS   EDGES, 2      ; RB2: minus one, not below 0\n    GOTO    NO_DOWN\n    MOVF    COUNT, F\n    BTFSS   STATUS, 2\n    DECF    COUNT, F\nNO_DOWN:\n    BTFSC   EDGES, 3      ; RB3: reset\n    CLRF    COUNT\n    MOVF    COUNT, W\n    MOVWF   PORTD\n    GOTO    LOOP\n'
+        }, R`$\text{NOW AND NOT OLD}$ has a $1$ only for a button that is pressed now and was released in the previous round, so holding a button counts once. <code>MOVF COUNT, F</code> tests COUNT for zero before the decrement.`, { challenge: true, hint: [R`Clear ANSELH (bank 3) and TRISD (bank 1) first, then go back to bank 0.`, R`In the loop: NOW $=$ PORTB; EDGES $=$ NOW AND NOT OLD (<code>COMF OLD, W</code> then <code>ANDWF NOW, W</code>); OLD $=$ NOW; then test the bits 1, 2 and 3 of EDGES.`] })
+      ]
     }
   ]
 });
@@ -6766,6 +6893,23 @@ a = a + b;`, R`    MOVF    BL, W
           reqs: [{ re: /\bRLF\b/i, msg: 'Use RLF.' }],
           solution: '    BCF STATUS, 0\n    RLF X, F\n    BCF STATUS, 0\n    RLF X, F\n    GOTO $'
         }, R`Each left shift multiplies by $2$: $X \times 2 \times 2 = 4X$. Clearing C makes the new bit 0 a zero.`, { hint: 'BCF STATUS, 0 then RLF X, F, twice.' })
+      ]
+    },
+{
+      title: 'Challenge: an average that never overflows',
+      objectives: ['You will use bitwise operations to calculate without overflow'],
+      blocks: [
+        D.T(R`<p>The average of two numbers is $\frac{a + b}{2}$, but the sum may not fit in the type. For two <code>unsigned int</code> values ($16$ bits in XC8) the sum can reach $131070$, and the calculation wraps around: <code>(65535 + 65533) / 2</code> gives $32766$ instead of $65534$. A wider type such as <code>long</code> solves it, but for the widest type of a compiler there is nothing wider. A bit trick needs no extra bits at all:</p>
+$$a + b = 2 \times (a \text{ AND } b) + (a \text{ XOR } b)$$
+<p>The $1$ bits that the two numbers have in common count twice; the bits that differ count once.</p>`),
+        D.c('An average that never overflows', R`<p>Write a function <code>unsigned int average(unsigned int a, unsigned int b)</code> which returns the average of <code>a</code> and <code>b</code>, rounded down, for all values from $0$ to $65535$, without <code>long</code>, <code>float</code> or <code>double</code>.</p>`, {
+          start: R`unsigned int average(unsigned int a, unsigned int b) {
+
+}
+`, tests: [[10, 20], [65535, 65533], [65535, 65535], [0, 65535], [7, 8], [40000, 30000], [1, 0]].map(([a, b]) => ({ call: 'average', args: [a, b], ret: Math.floor((a + b) / 2) })),
+          forbid: [{ re: /\b(long|float|double)\b/, msg: 'Do not use long, float or double: the challenge is to stay within 16 bits.' }],
+          solution: "unsigned int average(unsigned int a, unsigned int b) {\n    return (a & b) + ((a ^ b) >> 1);   // the common bits, plus half of the different bits\n}\n"
+        }, R`The common $1$ bits, <code>a &amp; b</code>, appear in both numbers, so they count fully in the average; the bits that differ, <code>a ^ b</code>, appear once, so they count half: a shift right by $1$. Neither part can overflow. Another solution is <code>a / 2 + b / 2 + (a &amp; b &amp; 1)</code>, which adds back the $1$ that is lost when both numbers are odd.`, { challenge: true, hint: [R`Try $a = 6 = 110_{2}$ and $b = 3 = 011_{2}$: which bits are in both numbers, and which in only one of them?`, R`The bits in both numbers are <code>a &amp; b</code> and count fully; the bits in only one are <code>a ^ b</code> and count half.`] })
       ]
     }
   ]
@@ -7080,6 +7224,20 @@ LOOP:
           solution: '    CLRF SUM\n    MOVLW 0x30\n    MOVWF FSR\n    MOVLW 8\n    MOVWF COUNT\nLOOP:\n    MOVF INDF, W\n    ADDWF SUM, F\n    INCF FSR, F\n    DECFSZ COUNT, F\n    GOTO LOOP\n    GOTO $'
         }, 'Each round reads the byte FSR points to with MOVF INDF, W, adds it to SUM and moves FSR forward.', { hint: 'MOVF INDF, W reads the current element; ADDWF SUM, F adds it.' })
       ]
+    },
+{
+      title: 'Challenge: run-length encoding',
+      objectives: ['You will walk through a string with pointers and write another string'],
+      blocks: [
+        D.T(R`<p><b>Run-length encoding</b> is one of the simplest ways to compress data: each run of equal characters is replaced by the character and the length of the run. <code>aaabccdddd</code> becomes <code>a3b1c2d4</code>: $10$ characters become $8$. It works well for data with long runs, such as simple black-and-white images, or the readings of a sensor that changes slowly.</p>`),
+        D.c('Run-length encoding', R`<p>Write a function <code>void rle(char *in, char *out)</code> which writes the run-length code of the string <code>in</code> into <code>out</code>, as a string. Each run gives its character followed by its length in decimal. Runs are at most $99$ characters long, so the length has one or two digits. <code>out</code> is big enough.</p>`, {
+          start: R`void rle(char *in, char *out) {
+
+}
+`, tests: [['aaabccdddd', 'a3b1c2d4'], ['abc', 'a1b1c1'], ['zzzzzzzzzzzz', 'z12'], ['HCT  Dubai', 'H1C1T1 2D1u1b1a1i1'], ['1112', '1321'], ['x'.repeat(25) + 'y', 'x25y1'], ['', '']].map(([s, code]) => ({ name: '"' + s + '"', call: 'rle', args: [s, ' '.repeat(40)], strings: [null, code] })),
+          solution: "void rle(char *in, char *out) {\n    char c;\n    unsigned char n;\n    while (*in != '\\0') {\n        c = *in;\n        n = 0;\n        while (*in == c) {          // count the run\n            n++;\n            in++;\n        }\n        *out++ = c;\n        if (n >= 10) {\n            *out++ = '0' + n / 10;\n        }\n        *out++ = '0' + n % 10;\n    }\n    *out = '\\0';\n}\n"
+        }, R`The outer loop starts a new run at every new character; the inner loop counts how long the run lasts and moves <code>in</code> past it. A length of $10$ or more needs two digits, <code>'0' + n / 10</code> and then <code>'0' + n % 10</code>. The final <code>'\0'</code> ends the output string.`, { challenge: true, hint: [R`Loop while <code>*in != '\0'</code>: remember the character <code>c = *in</code>, then count it with an inner loop <code>while (*in == c)</code> that also moves <code>in</code> forward.`, R`Write <code>c</code>, then the digits of the count: <code>'0' + n / 10</code> only if the count is at least $10$, then <code>'0' + n % 10</code>. Finish with <code>*out = '\0';</code>`] })
+      ]
     }
   ]
 });
@@ -7332,6 +7490,22 @@ STATUS_TEMP EQU 0x71    ; reachable from every bank
           solution: '    MOVWF W_TEMP\n    SWAPF STATUS, W\n    MOVWF STATUS_TEMP\n    BCF INTF\n    INCF PRESSES, F\n    MOVF PRESSES, W\n    MOVWF PORTD\n    SWAPF STATUS_TEMP, W\n    MOVWF STATUS\n    SWAPF W_TEMP, F\n    SWAPF W_TEMP, W\n    RETFIE\n'
         }, 'Without the saving, an interrupt just after MOVLW 7 leaves the ISR\'s value in W, and an interrupt just before a BTFSS changes the Z flag that it tests.', { hint: [R`At the start: <code>MOVWF W_TEMP</code>, <code>SWAPF STATUS, W</code>, <code>MOVWF STATUS_TEMP</code>.`, R`Before <code>RETFIE</code>: <code>SWAPF STATUS_TEMP, W</code>, <code>MOVWF STATUS</code>, <code>SWAPF W_TEMP, F</code>, <code>SWAPF W_TEMP, W</code>.`] }),
         D.mc('volatile', 'Which variable must be declared volatile?', ['A global counter incremented in the ISR and read in the main loop', 'A local variable of the ISR', 'A constant', 'A function parameter'], 0, 'The main code must re-read it from memory every time, because the ISR can change it at any moment.', { hint: 'Who else can change the variable while main is running?' })
+      ]
+    },
+{
+      title: 'Challenge: two interrupt sources',
+      objectives: ['You will write an ISR that serves two interrupt sources'],
+      blocks: [
+        D.T(R`<p>The PIC16F887 has a single interrupt vector, $0004_{16}$, for all its interrupt sources. When several sources are enabled, the ISR must find out which one interrupted by testing their flags, serve every source whose flag is set, and clear each of those flags. If two events happen at the same time, both flags are set: an ISR that serves only one of them and returns is called again at once for the other.</p>`),
+        D.asm('Two interrupt sources', R`<p>The main code (given after your ISR) enables the RB0 interrupt and the Timer0 interrupt, then checks W and the Z flag in an endless loop, as in the exercise <i>Save the context</i>, counting every damage in ERRORS. Timer0 counts the instruction cycles without prescaler, so it overflows every $256$ cycles. Write the ISR:</p>
+<ul><li>save W and STATUS;</li><li>if INTF is set: clear it and add $1$ to PRESSES;</li><li>if T0IF is set: clear it, add $1$ to TICKS and toggle RD7;</li><li>restore STATUS and W, and return with <code>RETFIE</code>.</li></ul>
+<p>The simulator presses the button at many different moments. At the end ERRORS must be $0$, and RD7 must have changed once per tick.</p>`, {
+          pre: "ZEROREG EQU 0x21\nERRORS  EQU 0x22\nPRESSES EQU 0x23\nTICKS   EQU 0x24\nW_TEMP  EQU 0x70\nSTATUS_TEMP EQU 0x71\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n",
+          post: "MAIN:\n    CALL SETUP\n    CLRF ZEROREG\n    CLRF ERRORS\n    CLRF PRESSES\n    CLRF TICKS\n    BSF  INTE           ; the RB0 interrupt\n    BSF  T0IE           ; the Timer0 interrupt\n    BSF  GIE\nLOOP:\n    MOVLW 7\n    XORLW 7             ; W must still be 7: Z = 1\n    BTFSS STATUS, 2\n    INCF ERRORS, F      ; W or Z was damaged\n    MOVF ZEROREG, W     ; sets Z = 1\n    BTFSS STATUS, 2     ; Z must still be 1\n    INCF ERRORS, F\n    GOTO LOOP\n\nSETUP:\n    CLRF PORTD\n    BSF  RP0\n    MOVLW 11001000B     ; RB0 rising edge, Timer0 from the instruction clock, no prescaler\n    MOVWF OPTION_REG\n    MOVLW 11111111B     ; RB0 is input\n    MOVWF TRISB\n    CLRF TRISD          ; PORTD is output\n    BSF  RP1\n    CLRF ANSELH         ; RB0 is digital\n    BCF  RP0\n    BCF  RP1\n    RETURN\n",
+          start: '    ; save W and STATUS\n\n    ; the button: INTF\n\n    ; Timer0: T0IF\n\n    ; restore STATUS and W\n\n    RETFIE\n',
+          tests: [['Timer0 alone', []], ['Five presses', [300, 520, 777, 1010, 1300]], ['Twenty presses', [200, 263, 331, 397, 466, 529, 601, 668, 734, 809, 871, 940, 1003, 1077, 1142, 1215, 1281, 1356, 1420, 1497]]].map(([name, steps]) => ({ name, events: pressSteps(steps), maxSteps: 2500, limitOk: true, expect: { ERRORS: 0, PRESSES: steps.length, TICKS: [11, 16] }, check: (r) => r.get('EDGES.D7') === r.get('TICKS') ? null : 'RD7 changed ' + r.get('EDGES.D7') + ' times but TICKS is ' + r.get('TICKS') + ': toggle RD7 once at every Timer0 overflow.' })),
+          solution: "    MOVWF W_TEMP        ; save W\n    SWAPF STATUS, W     ; save STATUS\n    MOVWF STATUS_TEMP\n    BTFSS INTF          ; the button?\n    GOTO  NOT_BUTTON\n    BCF   INTF\n    INCF  PRESSES, F\nNOT_BUTTON:\n    BTFSS T0IF          ; Timer0?\n    GOTO  RESTORE\n    BCF   T0IF\n    INCF  TICKS, F\n    MOVLW 10000000B\n    XORWF PORTD, F      ; toggle RD7\nRESTORE:\n    SWAPF STATUS_TEMP, W\n    MOVWF STATUS\n    SWAPF W_TEMP, F\n    SWAPF W_TEMP, W\n    RETFIE\n"
+        }, R`With two sources the ISR cannot assume which event called it: it tests INTF and T0IF and serves every flag that is set. A flag that is not cleared calls the ISR again at once, forever. Saving W and STATUS matters even more here: Timer0 interrupts the main loop every $256$ cycles, sooner or later at every possible place.`, { challenge: true, hint: [R`After saving the context: <code>BTFSS INTF</code> and a <code>GOTO</code> past the code of the button, which is <code>BCF INTF</code> and <code>INCF PRESSES, F</code>.`, R`Then the same for T0IF. Toggle RD7 with <code>MOVLW 10000000B</code> and <code>XORWF PORTD, F</code>. W is changed here, which is why it was saved.`] })
       ]
     }
   ]
@@ -7621,6 +7795,18 @@ void main(void) {
 }
 `
         }, '', { hint: R`<code>TMR1H = 3036 &gt;&gt; 8; TMR1L = 3036 &amp; 0xFF;</code> then <code>while (!TMR1IF);</code>` })
+      ]
+    },
+{
+      title: 'Challenge: measure a pulse',
+      objectives: ['You will use Timer1 as a stopwatch to measure the length of a pulse'],
+      blocks: [
+        D.T(R`<p>Timer1 can also work as a stopwatch: switched on at the start of an event and off at its end, it holds the duration in instruction cycles, up to $65535$. Many sensors answer with a pulse whose length is the measurement; an ultrasonic distance sensor, for example, makes a pulse as long as the echo takes to come back. With a $4\ \mathrm{MHz}$ clock, one count of Timer1 without prescaler is $1\ \mu\mathrm{s}$.</p>`),
+        D.asm('Measure a pulse', R`<p>A pulse arrives on RD0, which is an input after a reset: the pin goes to $1$, stays there for a while, and goes back to $0$. Measure its length in instruction cycles with Timer1 (internal clock, prescaler $1$) and store it in WH:WL. Start counting from $0$: the timer holds an unknown value after a reset. The pulse lasts at most $65535$ cycles; a difference of a few cycles is accepted.</p>`, {
+          start: 'WH EQU 0x20\nWL EQU 0x21\n\n; write your code here\n\n    GOTO $\n',
+          tests: [1000, 300, 20000, 50000].map(w => ({ name: R`Pulse of $` + w + R`$ cycles`, init: { TMR1H: 0x12, TMR1L: 0x34, WH: 9, WL: 9 }, events: [{ at: 5000, pins: { D: 1 } }, { at: 5000 + w, pins: { D: 0 } }], maxSteps: 60000, limitOk: true, check: (r) => { const got = r.get('WH') * 256 + r.get('WL'); return Math.abs(got - w) <= 12 ? null : 'WH:WL is ' + got + ', but the pulse lasted ' + w + ' cycles.'; } })),
+          solution: "WH EQU 0x20\nWL EQU 0x21\n\n    CLRF  T1CON         ; Timer1 off: internal clock, prescaler 1\n    CLRF  TMR1H\n    CLRF  TMR1L\nWAIT_HIGH:\n    BTFSS PORTD, 0      ; wait for the start of the pulse\n    GOTO  WAIT_HIGH\n    BSF   T1CON, 0      ; TMR1ON: start counting\nWAIT_LOW:\n    BTFSC PORTD, 0      ; wait for the end of the pulse\n    GOTO  WAIT_LOW\n    BCF   T1CON, 0      ; stop\n    MOVF  TMR1H, W\n    MOVWF WH\n    MOVF  TMR1L, W\n    MOVWF WL\n    GOTO  $\n"
+        }, R`T1CON $= 0$ selects the instruction clock and prescaler $1$, and keeps the timer stopped while TMR1H and TMR1L are cleared. Each polling loop reacts within $3$ cycles, so the result differs from the real length by only a few cycles. Stopping the timer before reading it keeps the two bytes consistent: reading a running timer could give a high byte and a low byte from different moments.`, { challenge: true, hint: [R`Clear T1CON (Timer1 off, prescaler $1$, internal clock), TMR1H and TMR1L. Then wait for the pulse with <code>BTFSS PORTD, 0</code> and <code>GOTO $-1</code>.`, R`<code>BSF T1CON, 0</code> (TMR1ON) starts the timer. Wait for RD0 $= 0$, stop the timer with <code>BCF T1CON, 0</code>, and copy TMR1H into WH and TMR1L into WL.`] })
       ]
     }
   ]
@@ -7933,6 +8119,23 @@ void main(void) {
 }
 `
         }, '', { hint: [R`Read the value in two statements, as in Activity 16C: <code>unsigned int value = (ADRESH &lt;&lt; 8) | ADRESL;</code> and then <code>value = value &gt;&gt; 6;</code> (see the warning above).`, R`Then <code>t = (long) value * 100 / 1023;</code>, print it, and set <code>relay</code> with an <code>if</code>.`] })
+      ]
+    },
+{
+      title: 'Challenge: a dimmer with a minimum',
+      objectives: ['You will connect the A/D converter and the PWM in one program'],
+      blocks: [
+        D.T(R`<p>A dimmer connects the two halves of this part: the A/D converter reads a potentiometer and the PWM sets the brightness of an LED. With PR2 $= 255$, the duty cycle is $\frac{\text{CCPR1L}}{256}$ (when the 2 low bits in CCP1CON are $0$), so the $8$ high bits of a left-justified conversion, ADRESH, can go straight into CCPR1L. Real dimmers often keep a minimum brightness, so that a lamp turned all the way down does not look broken.</p>`),
+        D.asm('A dimmer with a minimum', R`<p>Write the whole program. Set up the PWM on CCP1 (RC2) with PR2 $= 255$ and the Timer2 prescaler $16$, with the register values of Activity 13C, and the A/D converter on AN0 (ADCON1 can stay $0$: left justified). Then loop forever: convert AN0 and copy ADRESH into CCPR1L, but never less than $26$ (about $10\,\%$): if ADRESH is below $26$, use $26$.</p>`, {
+          start: 'LEVEL EQU 0x20\nA1    EQU 0x21\n\n; the setup\n\nLOOP:\n    ; read AN0, then set the brightness\n\n    GOTO LOOP\n',
+          tests: [
+            { name: R`$2.5\ \mathrm{V}$`, init: { analog: { 0: 2.5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 128, 'PWM1.ON': 1, 'PWM1.FREQ': [244, 244.3], TRISC2: 0 } },
+            { name: R`$1\ \mathrm{V}$`, init: { analog: { 0: 1 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 51, 'PWM1.ON': 1 } },
+            { name: R`$5\ \mathrm{V}$`, init: { analog: { 0: 5 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 255 } },
+            { name: R`$0.2\ \mathrm{V}$: the minimum`, init: { analog: { 0: 0.2 } }, maxSteps: 3000, limitOk: true, expect: { CCPR1L: 26, 'PWM1.ON': 1 } },
+            { name: R`$1\ \mathrm{V}$, then $4\ \mathrm{V}$`, init: { analog: { 0: 1 } }, events: [{ step: 1500, analog: { 0: 4 } }], maxSteps: 3000, limitOk: true, expect: { CCPR1L: 204 } }],
+          solution: "LEVEL EQU 0x20\nA1    EQU 0x21\n\n    BANKSEL PR2\n    MOVLW   255\n    MOVWF   PR2         ; PWM period: 256 x 16 cycles\n    BCF     TRISC, 2    ; RC2 (CCP1) output\n    BANKSEL T2CON\n    MOVLW   00000111B\n    MOVWF   T2CON       ; Timer2 on, prescaler 16\n    MOVLW   00001100B\n    MOVWF   CCP1CON     ; CCP1 in PWM mode\n    MOVLW   01000001B\n    MOVWF   ADCON0      ; Fosc/8, AN0, converter on (ADCON1 = 0: left justified)\nLOOP:\n    MOVLW   5\n    MOVWF   A1\n    DECFSZ  A1, F       ; acquisition time\n    GOTO    $-1\n    BSF     ADCON0, 1   ; GO: start the conversion\n    BTFSC   ADCON0, 1   ; wait until it is finished\n    GOTO    $-1\n    MOVF    ADRESH, W\n    MOVWF   LEVEL\n    MOVLW   26\n    SUBWF   LEVEL, W    ; LEVEL - 26: C = 0 if LEVEL < 26\n    MOVLW   26\n    BTFSC   STATUS, 0\n    MOVF    LEVEL, W    ; LEVEL >= 26: keep it\n    MOVWF   CCPR1L      ; the brightness\n    GOTO    LOOP\n"
+        }, R`The register values come from Activity 13C (PWM) and Activity 14 (A/D converter). In the loop, <code>SUBWF</code> compares the reading with $26$: C $= 0$ means it is smaller, and $26$ is used instead. $1\ \mathrm{V}$ gives about $\frac{1}{5} \times 1024 \approx 205$, so ADRESH $= 51$, a duty cycle of about $20\,\%$.`, { challenge: true, hint: [R`Setup: PR2 $= 255$ and TRISC2 $= 0$ (bank 1); T2CON $= 00000111_{2}$, CCP1CON $= 00001100_{2}$ and ADCON0 $= 01000001_{2}$ (bank 0).`, R`Loop: wait a few cycles (the acquisition time), <code>BSF ADCON0, 1</code> (GO), wait while it is $1$, then compare ADRESH with $26$ using <code>SUBWF</code> and copy the right value into CCPR1L.`] })
       ]
     }
   ]
@@ -8376,6 +8579,26 @@ void main(void) {
 `
         }, '', { hint: [R`Read the character once: <code>char c = RCREG;</code>`, R`<code>USART_SEND</code> stops after the <code>'\r'</code> at the end of the phrase.`] })
       ]
+    },
+{
+      title: 'Challenge: a number from the keyboard',
+      objectives: ['You will turn a sequence of received digit characters into a number'],
+      blocks: [
+        D.T(R`<p>A terminal program on the computer sends the keys you type one character at a time. The number $123$ arrives as the three characters <code>'1'</code>, <code>'2'</code> and <code>'3'</code>, followed by the Enter key, character $13$ (<code>'\r'</code>). The program builds the value digit by digit, the way you read a number from left to right:</p>
+$$N \leftarrow 10 \times N + \text{digit}: \qquad 0 \to 1 \to 12 \to 123.$$`),
+        D.asm('A number from the keyboard', R`<p>Receive numbers from the serial port; SETUP and USART_SEND are given, and you poll RCIF. For each digit character update $\text{N} \leftarrow 10 \times \text{N} + \text{digit}$, doing the multiplication by $10$ with shifts. When character $13$ arrives, show N on PORTD, send <code>OK</code> back, and start again with N $= 0$. The numbers are at most $255$.</p>`, {
+          pre: "CHAR EQU 0x20\nN    EQU 0x21\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n    RETFIE\n",
+          post: "\nSETUP:\n    CLRF  PORTD\n    BANKSEL TRISD\n    CLRF  TRISD         ; PORTD outputs\n    BCF   TRISC, 6      ; TX output\n    BSF   TRISC, 7      ; RX input\n    MOVLW 25\n    MOVWF SPBRG         ; 9600 baud at 4 MHz\n    MOVLW 00100100B\n    MOVWF TXSTA         ; transmitter on, BRGH = 1\n    BANKSEL RCSTA\n    MOVLW 10010000B     ; serial port on, continuous receive\n    MOVWF RCSTA\n    RETURN\n\nUSART_SEND:             ; sends the character in W\n    MOVWF TXREG\n    BSF   RP0\n    BTFSS TRMT          ; wait until it has left\n    GOTO  $-1\n    BCF   RP0\n    RETURN\n",
+          start: 'MAIN:\n    CALL SETUP\n    CLRF N\nWAIT:\n    ; wait for a character, then use it\n\n    GOTO WAIT\n',
+          tests: [
+            { name: '"123" and Enter', events: [{ step: 200, rx: '123\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 123, TX: 'OK' } },
+            { name: '"7", then "255"', events: [{ step: 200, rx: '7\r' }, { step: 9000, rx: '255\r' }], maxSteps: 30000, limitOk: true, at: [{ step: 8500, expect: { 'OUT.D': 7 }, label: 'after the first number' }], expect: { 'OUT.D': 255, TX: 'OKOK' } },
+            { name: '"0" and Enter', events: [{ step: 200, rx: '0\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 0, TX: 'OK' } },
+            { name: '"42", "9", "100"', events: [{ step: 200, rx: '42\r' }, { step: 9000, rx: '9\r' }, { step: 16000, rx: '100\r' }], maxSteps: 30000, limitOk: true, expect: { 'OUT.D': 100, TX: 'OKOKOK' } }],
+          reqs: [{ re: /\bRLF\b/i, msg: 'Multiply by 10 with RLF shifts.' }],
+          solution: "MAIN:\n    CALL  SETUP\n    CLRF  N\nWAIT:\n    BTFSS RCIF          ; wait for a character\n    GOTO  WAIT\n    MOVF  RCREG, W      ; read it: clears RCIF\n    MOVWF CHAR\n    XORLW 13            ; the end of the number?\n    BTFSC STATUS, 2\n    GOTO  DONE\n    BCF   STATUS, 0\n    RLF   N, F          ; 2N\n    MOVF  N, W          ; W = 2N\n    BCF   STATUS, 0\n    RLF   N, F          ; 4N\n    BCF   STATUS, 0\n    RLF   N, F          ; 8N\n    ADDWF N, F          ; 8N + 2N = 10N\n    MOVLW '0'\n    SUBWF CHAR, W       ; W = the value of the digit\n    ADDWF N, F          ; N = 10N + digit\n    GOTO  WAIT\nDONE:\n    MOVF  N, W\n    MOVWF PORTD         ; show the number\n    MOVLW 'O'\n    CALL  USART_SEND\n    MOVLW 'K'\n    CALL  USART_SEND\n    CLRF  N             ; ready for the next number\n    GOTO  WAIT\n"
+        }, R`$10\text{N} = 8\text{N} + 2\text{N}$: after the first shift W keeps $2\text{N}$, two more shifts give $8\text{N}$, and one addition gives $10\text{N}$. Each shift needs C $= 0$ first. <code>SUBWF CHAR, W</code> with W $=$ <code>'0'</code> turns the character into its value. Reading RCREG clears RCIF, so the loop then waits for the next character.`, { challenge: true, hint: [R`Loop: wait for RCIF and copy RCREG into CHAR. <code>XORLW 13</code> sets Z if it is the end of the number.`, R`For a digit: three <code>RLF N, F</code>, each after <code>BCF STATUS, 0</code>, keeping $2\text{N}$ in W after the first one, then <code>ADDWF N, F</code>. Then <code>MOVLW '0'</code>, <code>SUBWF CHAR, W</code> and <code>ADDWF N, F</code>.`] })
+      ]
     }
   ]
 });
@@ -8783,6 +9006,22 @@ void main(void) {
         }, 'The interrupt counts the RB0 edges; the main loop polls RB1 and clears the count while it is pressed.', { hint: [R`The ISR is the context-saving ISR of Part 10 with <code>INCF COUNT, F</code>, <code>MOVF COUNT, W</code> and <code>MOVWF PORTD</code> in the middle.`, R`In LOOP: <code>BTFSS PORTB, 1</code> / <code>GOTO LOOP</code>, then <code>CLRF COUNT</code> and <code>CLRF PORTD</code>.`] }),
         D.T(R`<p><b>Congratulations!</b> You have reached the end of the course. You can now write programs in C and in assembly: variables and types, decisions and loops, functions and subroutines, bits and registers, arrays, strings and pointers, interrupts, timers, PWM, the A/D converter, the LCD and the serial port. Remember to <b>save your progress</b> to a file, and try the programs on a real PIC16F887 with MPLAB X when you can.</p>`)
       ]
+    },
+{
+      title: 'Challenge: a lock with three tries',
+      objectives: ['You will combine a table, counters and the serial port in a small security device'],
+      blocks: [
+        D.T(R`<p>The code lock of Section 3 accepts the code anywhere in a stream of characters, so a burglar can simply type every combination one after the other. Real locks read codes of a fixed length and count the failures: after three wrong codes they raise an alarm and refuse to open, even for the right code.</p>`),
+        D.asm('A lock with three tries', R`<p>Characters arrive at the serial port (SETUP is given). Read them in groups of three: each group is one try.</p>
+<ul><li>If a group is the code <code>123</code>, light RD0 (the lock opens) and stop.</li><li>If not, count the wrong try. After the third wrong try, light RD1 (the alarm) and stop: no more characters are read, so even the right code no longer opens the lock.</li></ul>
+<p>Keep the code in a <code>RETLW</code> table called <code>CODE</code>, so it can be changed in one place, and compare each character with the table entry for its position. Stop with <code>GOTO $</code>.</p>`, {
+          pre: "CHAR  EQU 0x20\nPOS   EQU 0x21\nTRIES EQU 0x22\nWRONG EQU 0x23\n    ORG 0\n    GOTO MAIN\n    ORG 0X4\n    RETFIE\n", post: "\nSETUP:\n    CLRF  PORTD\n    BANKSEL TRISD\n    CLRF  TRISD         ; PORTD outputs\n    BSF   TRISC, 7      ; RX input\n    MOVLW 25\n    MOVWF SPBRG         ; 9600 baud at 4 MHz\n    MOVLW 00100100B\n    MOVWF TXSTA         ; BRGH = 1\n    BANKSEL RCSTA\n    MOVLW 10010000B     ; serial port on, continuous receive\n    MOVWF RCSTA\n    RETURN\n",
+          start: 'MAIN:\n    CALL SETUP\n    CLRF TRIES\n\n; read the tries\n\n    GOTO $\n',
+          tests: [['123', 1, 0], ['124', 0, 0], ['111222333', 0, 1], ['999888123', 1, 0], ['111222333123', 0, 1], ['124123', 1, 0], ['312', 0, 0]].map(([s, open, alarm]) => ({ name: '"' + s + '"', events: [{ step: 200, rx: s }], maxSteps: 12000, limitOk: true, expect: { RD0: open, RD1: alarm } })),
+          reqs: [{ re: /\bRETLW\b/i, msg: 'Keep the code in a RETLW table.' }],
+          solution: "MAIN:\n    CALL  SETUP\n    CLRF  TRIES\nNEW_TRY:\n    CLRF  POS           ; position in the code: 0, 1, 2\n    CLRF  WRONG         ; no mistake yet\nNEXT:\n    BTFSS RCIF          ; wait for a character\n    GOTO  NEXT\n    MOVF  RCREG, W\n    MOVWF CHAR\n    MOVF  POS, W\n    CALL  CODE          ; W = the character expected here\n    XORWF CHAR, W       ; Z = 1 if they are equal\n    BTFSS STATUS, 2\n    BSF   WRONG, 0      ; remember the mistake, but keep reading\n    INCF  POS, F\n    MOVF  POS, W\n    XORLW 3             ; three characters received?\n    BTFSS STATUS, 2\n    GOTO  NEXT\n    BTFSS WRONG, 0\n    GOTO  OPEN          ; no mistake: the right code\n    INCF  TRIES, F\n    MOVF  TRIES, W\n    XORLW 3             ; the third wrong code?\n    BTFSS STATUS, 2\n    GOTO  NEW_TRY\n    BSF   PORTD, 1      ; alarm, and accept nothing more\n    GOTO  $\nOPEN:\n    BSF   PORTD, 0      ; open the lock\n    GOTO  $\n\nCODE:                   ; W = 0, 1, 2 -> the characters of the code\n    ADDWF PCL, F\n    RETLW '1'\n    RETLW '2'\n    RETLW '3'\n"
+        }, R`A wrong character does not end the try early: the lock always reads three characters, so nobody can tell which digit was wrong. WRONG remembers a mistake until the end of the group, POS selects the expected character in the table, and TRIES counts the wrong groups.`, { challenge: true, hint: [R`Use POS ($0$, $1$, $2$), WRONG (set when a character differs) and TRIES. For each character: <code>MOVF POS, W</code>, <code>CALL CODE</code>, <code>XORWF CHAR, W</code>; if Z $= 0$, set WRONG.`, R`After the third character: without a mistake, <code>BSF PORTD, 0</code> and <code>GOTO $</code>. Otherwise <code>INCF TRIES, F</code>; if TRIES is $3$, <code>BSF PORTD, 1</code> and <code>GOTO $</code>; if not, clear POS and WRONG for the next try.`] })
+      ]
     }
   ]
 });
@@ -9042,7 +9281,7 @@ function renderPart(p) {
   art.append(el('div', { class: 'paper pis' }, el('div', { class: 'pis-t', text: 'In this part' }), el('ol', { class: 'pis-l' }, p.sections.map(s => { const st = stats(s.exs); return el('li', {}, el('a', { href: secHref(p, s) }, el('span', { class: 'pis-n', text: s.num }), el('span', { class: 'pis-x', text: s.title }), st.total ? el('span', { class: 'pis-c' + (st.done === st.total ? ' all' : ''), text: st.done + ' / ' + st.total }) : null)); }))));
   const exs = partExs(p);
   const det = el('details', { class: 'paper acc' }, el('summary', {}, el('span', { text: 'List of exercises in this part' }), el('span', { class: 'acc-ico', html: ICON.chevron })),
-    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
+    el('div', { class: 'acc-b' }, p.sections.map(s => s.exs.length ? el('div', { class: 'acc-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', {}, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : '' }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))) : null)));
   art.append(det);
   return art;
 }
@@ -9100,7 +9339,7 @@ function renderAllExercises() {
     art.append(el('h2', { class: 'sec-h' }, el('a', { href: '#/' + p.slug, text: 'Part ' + p.num + ': ' }), el('span', { html: p.title }), el('small', { class: 'h-count', text: '  ' + st.done + ' / ' + st.total })));
     p.sections.forEach(s => {
       if (!s.exs.length) return;
-      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k', text: e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz' }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
+      art.append(el('div', { class: 'allex-sec' }, el('div', { class: 'acc-st', text: s.num + '. ' + s.title }), el('ul', { class: 'allex' }, s.exs.map(e => el('li', { class: isDone(e.id) ? 'done' : (isTried(e.id) ? 'tried' : '') }, el('a', { href: secHref(p, s) + '/' + e.id, text: e.title }), el('span', { class: 'acc-k' + (e.challenge ? ' ch' : ''), text: e.challenge ? 'challenge' : (e.type === 'code' ? (e.lang === 'asm' ? 'assembly' : 'C') : 'quiz') }), isDone(e.id) ? el('span', { class: 'acc-ok', html: ICON.check }) : null)))));
     });
   });
   return art;

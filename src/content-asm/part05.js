@@ -163,6 +163,20 @@ DELAY_500MS:                   ; three nested loops
         D.num('Period of 1 Hz', R`<p>An LED blinks at $2\ \mathrm{Hz}$ with equal on and off times. How long is it on, in milliseconds?</p>`, 250, R`$T = \frac{1}{2\ \mathrm{Hz}} = 500\ \mathrm{ms}$ and the LED is on for $\frac{T}{2} = 250\ \mathrm{ms}$.`, { unit: 'ms', hint: R`First find the period $T = \frac{1}{f}$.` }),
         D.num('Half the blinking speed', R`<p>To blink the LED at $0.5\ \mathrm{Hz}$ instead of $1\ \mathrm{Hz}$ (with equal on and off times), how many times must <code>DELAY_500MS</code> be called after each change of the LED?</p>`, 2, R`At $0.5\ \mathrm{Hz}$ the period is $\frac{1}{0.5} = 2\ \mathrm{s}$: $1\ \mathrm{s}$ on and $1\ \mathrm{s}$ off, which is two calls of $500\ \mathrm{ms}$.`, { hint: 'Find the new period first.' })
       ]
+    },
+{
+      title: 'Challenge: integer square root',
+      objectives: ['You will turn a mathematical identity into a loop'],
+      blocks: [
+        D.T(R`<p>The PIC cannot multiply, let alone take square roots. But the odd numbers have a beautiful property:</p>
+$$1 = 1^{2}, \quad 1 + 3 = 2^{2}, \quad 1 + 3 + 5 = 3^{2}, \quad \ldots, \quad 1 + 3 + 5 + \cdots + (2k - 1) = k^{2}.$$
+<p>So the square root of a number is how many odd numbers $1, 3, 5, \ldots$ can be subtracted from it, one after the other, before the rest becomes too small. For $20$: $20 - 1 - 3 - 5 - 7 = 4$, and the next odd number $9$ no longer fits, so $\lfloor \sqrt{20} \rfloor = 4$.</p>`),
+        D.asm('Integer square root', R`<p>Store in ROOT the integer square root of N ($0 \leq \text{N} \leq 255$): the biggest whole number whose square is not more than N. Use the odd-number method above. REST and ODD are free.</p>`, {
+          start: 'N    EQU 0x20\nROOT EQU 0x21\nREST EQU 0x22\nODD  EQU 0x23\n\n; write your code here\n\n    GOTO $\n',
+          tests: [[0, 0], [1, 1], [2, 1], [15, 3], [16, 4], [20, 4], [99, 9], [100, 10], [255, 15]].map(([n, r]) => ({ name: R`$\text{N} = ` + n + R`$`, init: { N: n, ROOT: 99 }, expect: { ROOT: r } })),
+          solution: 'N    EQU 0x20\nROOT EQU 0x21\nREST EQU 0x22\nODD  EQU 0x23\n\n    CLRF  ROOT\n    MOVF  N, W\n    MOVWF REST        ; what is left\n    MOVLW 1\n    MOVWF ODD         ; the next odd number\nLOOP:\n    MOVF  ODD, W\n    SUBWF REST, W     ; REST - ODD\n    BTFSS STATUS, 0\n    GOTO  DONE        ; it does not fit any more\n    MOVWF REST\n    INCF  ROOT, F\n    INCF  ODD, F\n    INCF  ODD, F      ; ODD + 2\n    GOTO  LOOP\nDONE:\n    GOTO $\n'
+        }, R`Each round subtracts the next odd number and counts one. After $k$ rounds exactly $k^{2}$ has been subtracted, so the loop stops at the biggest $k$ with $k^{2} \leq \text{N}$. For $\text{N} = 255$: $15^{2} = 225$ fits but $16^{2} = 256$ does not.`, { challenge: true, hint: [R`REST starts as N, ODD as $1$, ROOT as $0$.`, R`Loop: if $\text{REST} - \text{ODD}$ needs a borrow, stop; otherwise keep the difference in REST, add $1$ to ROOT and $2$ to ODD.`] })
+      ]
     }
   ]
 });

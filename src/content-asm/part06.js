@@ -167,6 +167,19 @@ SETUP:
         D.mc('Which is true?', 'Which statement matches the conclusions of Lecture 8?', ['In assembly you know exactly how long each instruction takes; in C you cannot predict the execution time exactly', 'C programs always run faster than assembly', 'In C you must select the RAM banks yourself', 'Assembly code is always placed by the compiler'], 0, 'C is easier, assembly gives direct control and exact timing.', { hint: 'Which language shows every instruction that is executed?' }),
         D.fill('The assembly template', 'Complete the skeleton of an assembly program.', '    #include <{{xc.inc}}>\n\n    {{ORG}} 0\n    GOTO {{MAIN}}\n    ORG 0X{{4}}\n    {{RETFIE}}\n\nMAIN:\n    CALL {{SETUP}}\n    GOTO $\n\nSETUP:\n    ; configure the ports\n    {{RETURN}}', R`<code>xc.inc</code> gives the register names; <code>ORG 0</code> with <code>GOTO MAIN</code> is the reset vector, <code>ORG 0X4</code> the interrupt vector (here only <code>RETFIE</code>); MAIN calls SETUP, which ends with <code>RETURN</code>.`, { lang: 'asm', hint: 'Look at the template of Activity 2 above.' })
       ]
+    },
+{
+      title: 'Challenge: a byte as hexadecimal text',
+      objectives: ['You will write a subroutine and call it twice with different inputs'],
+      blocks: [
+        D.T(R`<p>To show a register on an LCD or send it to a computer, the program must turn its value into text. In hexadecimal every byte becomes exactly two characters: $3A_{16}$ becomes <code>'3'</code> and <code>'A'</code>. The digits $0 \ldots 9$ map to the ASCII codes $48 \ldots 57$, but $A \ldots F$ map to $65 \ldots 70$, so a simple addition is not enough: a look-up table handles both cases at once.</p>`),
+        D.asm('A byte as hexadecimal text', R`<p>Write a subroutine <code>NIB2HEX</code> that turns the value $0 \ldots 15$ in W into its hexadecimal character in W (<code>'0'</code> … <code>'9'</code>, <code>'A'</code> … <code>'F'</code>). Then call it <b>twice</b> to store the two characters of BYTE in HEXH (the high digit) and HEXL (the low digit).</p>`, {
+          start: 'BYTE EQU 0x20\nHEXH EQU 0x21\nHEXL EQU 0x22\n\n; the main code, then the subroutine NIB2HEX\n\n    GOTO $\n',
+          tests: [[0x3A, '3A'], [0x00, '00'], [0xFF, 'FF'], [0x9C, '9C'], [0x07, '07']].map(([v, t]) => ({ name: R`$\text{BYTE} = ` + t + R`_{16}$`, init: { BYTE: v }, expect: { HEXH: t.charCodeAt(0), HEXL: t.charCodeAt(1) } })),
+          reqs: [{ re: /CALL\s+NIB2HEX[\s\S]*CALL\s+NIB2HEX/i, msg: 'Call NIB2HEX twice.' }],
+          solution: "BYTE EQU 0x20\nHEXH EQU 0x21\nHEXL EQU 0x22\n\n    SWAPF BYTE, W     ; the high digit\n    ANDLW 0x0F\n    CALL  NIB2HEX\n    MOVWF HEXH\n    MOVF  BYTE, W     ; the low digit\n    ANDLW 0x0F\n    CALL  NIB2HEX\n    MOVWF HEXL\n    GOTO  $\n\nNIB2HEX:              ; W = 0 ... 15 -> W = its character\n    ADDWF PCL, F\n" + '0123456789ABCDEF'.split('').map(c => "    RETLW '" + c + "'\n").join('')
+        }, R`<code>SWAPF BYTE, W</code> and <code>ANDLW 0x0F</code> isolate the high digit, <code>ANDLW 0x0F</code> alone the low digit. The table returns the character for each of the $16$ values; one subroutine serves both calls.`, { challenge: true, hint: [R`The subroutine is a look-up table: <code>ADDWF PCL, F</code> followed by $16$ <code>RETLW</code> instructions, from <code>RETLW '0'</code> to <code>RETLW 'F'</code>.`, R`For the high digit, <code>SWAPF BYTE, W</code> then <code>ANDLW 0x0F</code> before the call; for the low digit, <code>MOVF BYTE, W</code> then <code>ANDLW 0x0F</code>.`] })
+      ]
     }
   ]
 });

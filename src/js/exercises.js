@@ -679,7 +679,7 @@ function buildExercise(ex, hooks) {
   const hints = [].concat(ex.hint || []);
   let hintShown = 0;
   const isProg = ex.type === 'code';
-  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
+  const card = el('section', { class: 'ex-card ' + (isProg ? 'prog' : 'quiz') + (ex.challenge ? ' challenge' : '') + (saved.done ? ' done' : ''), id: 'ex-' + ex.id, 'aria-labelledby': 'exh-' + ex.id });
   const fb = el('div', { class: 'fb', 'aria-live': 'polite' });
   const hintBox = el('div', { class: 'fb hint' });
   const solBox = el('div', { class: 'fb sol' });
@@ -688,8 +688,8 @@ function buildExercise(ex, hooks) {
   ctx.check = () => doCheck();
   const pts = el('span', { class: 'pt-got', text: saved.done ? '1' : '0' });
   const head = el('div', { class: 'ex-head' },
-    el('span', { class: 'ex-ico', html: MOOC.ICON[isProg ? 'pencil' : 'quiz'] }),
-    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: isProg ? 'Programming exercise · ' + (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz' }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
+    el('span', { class: 'ex-ico', html: MOOC.ICON[ex.challenge ? 'star' : (isProg ? 'pencil' : 'quiz')] }),
+    el('div', { class: 'ex-titles' }, el('span', { class: 'ex-kind', text: (ex.challenge ? 'Challenge · ' : (isProg ? 'Programming exercise · ' : '')) + (isProg ? (ex.lang === 'asm' ? 'Assembly' : 'C') : 'Quiz') }), el('h3', { id: 'exh-' + ex.id, text: ex.title })),
     el('div', { class: 'ex-points' }, el('span', { class: 'pt-l', text: 'Points' }), el('div', { class: 'pt-pills' }, pts, el('span', { class: 'pt-sep', text: '/' }), el('span', { class: 'pt-max', text: '1' }))));
   const body = el('div', { class: 'ex-body' });
   body.append(el('div', { class: 'q', html: ex.q }));

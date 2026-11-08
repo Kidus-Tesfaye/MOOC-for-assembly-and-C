@@ -322,6 +322,21 @@ void main(void) {
 `
         }, '', { hint: [R`Copy <code>s</code> into an <code>unsigned char</code> variable: the bits stay the same, only the meaning changes.`, R`Print the unsigned copy with <code>%d</code> and with <code>%X</code>.`] })
       ]
+    },
+{
+      title: 'Challenge: a byte in binary',
+      objectives: ['You will extract the bits of a number with arithmetic', 'You will calculate a two\'s complement value'],
+      blocks: [
+        D.T(R`<p><code>printf</code> prints numbers in decimal (<code>%d</code>) and in hexadecimal (<code>%X</code>), but it has no format for binary. You can build the binary digits yourself: dividing by $2^{k}$ moves bit $k$ down to bit 0, and <code>% 2</code> keeps only that bit. For $165 = 1010\,0101_{2}$:</p>
+$$\left\lfloor \frac{165}{32} \right\rfloor = 5 = 101_{2}, \qquad 5 \bmod 2 = 1, \qquad \text{so bit 5 is } 1.$$`),
+        D.c('A byte in binary', R`<p>Write a program which asks for a number from $0$ to $255$ and prints its $8$ bits, and then the value of the same $8$ bits read as a <code>signed char</code> (two's complement), exactly in the format shown. Calculate both with arithmetic: no <code>if</code> and no loops are needed.</p>`, {
+          start: START, sample: R`Number (0-255): [[165]]
+Binary: 10100101
+Signed: -91`,
+          tests: [165, 0, 255, 128, 127, 6].map(v => ({ name: String(v), stdin: v + '\n', out: 'Number (0-255): Binary: ' + H.b8(v) + '\nSigned: ' + (v > 127 ? v - 256 : v) + '\n' })),
+          solution: "#include <stdio.h>\n\nvoid main(void) {\n    int n;\n    printf(\"Number (0-255): \");\n    scanf(\"%d\", &n);\n    printf(\"Binary: %d%d%d%d\", n / 128 % 2, n / 64 % 2, n / 32 % 2, n / 16 % 2);\n    printf(\"%d%d%d%d\\n\", n / 8 % 2, n / 4 % 2, n / 2 % 2, n % 2);\n    printf(\"Signed: %d\\n\", n - 256 * (n / 128));   // bit 7 is worth -128, not +128\n}\n"
+        }, R`<code>n / 128 % 2</code> is bit 7, <code>n / 64 % 2</code> is bit 6, and so on down to <code>n % 2</code>, which is bit 0. In two's complement bit 7 is worth $-128$ instead of $+128$, so the signed value is $n - 256$ when bit 7 is $1$: <code>n - 256 * (n / 128)</code>. A cast, <code>(signed char)n</code>, gives the same value.`, { challenge: true, hint: [R`<code>n / 128</code> is $1$ exactly when bit 7 is $1$. For bit 6, divide by $64$ and keep the last bit with <code>% 2</code>.`, R`A <code>printf</code> with several <code>%d</code> prints the digits next to each other. For the signed value: bit 7 is worth $-128$, so subtract $256$ when it is $1$.`] })
+      ]
     }
   ]
 });

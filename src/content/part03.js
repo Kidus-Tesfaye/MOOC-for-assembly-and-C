@@ -203,6 +203,19 @@ PSECT BLABLA,CLASS=CODE, DELTA=2,ABS
           pre: 'REG1 EQU 0x20\nREG2 EQU 0x21', start: 'START:\n    ; load 7 into REG1 and jump to FINISH\n\n    MOVLW 99\n    MOVWF REG2      ; must be skipped\nFINISH:\n    GOTO $\n', tests: [{ expect: { REG1: 7, REG2: 0 } }], reqs: [{ re: /GOTO\s+FINISH/i, msg: 'Jump with GOTO FINISH.' }], solution: 'START:\n    MOVLW 7\n    MOVWF REG1\n    GOTO FINISH\n    MOVLW 99\n    MOVWF REG2\nFINISH:\n    GOTO $\n'
         }, 'GOTO FINISH writes the address of FINISH into the program counter, so the two instructions in between never execute.', { hint: 'Insert MOVLW 7, MOVWF REG1 and GOTO FINISH before MOVLW 99.' })
       ]
+    },
+{
+      title: 'Challenge: rotate by one hexadecimal digit',
+      objectives: ['You will combine SWAPF, masks and IORWF to move digits between two registers'],
+      blocks: [
+        D.T(R`<p>A 16-bit number is stored in two registers, HI and LO, as four hexadecimal digits: $1234_{16}$ is HI $= 12_{16}$ and LO $= 34_{16}$. <b>Rotating</b> it by one digit to the left moves every digit one place left and brings the first digit round to the end: $1234_{16}$ becomes $2341_{16}$. Each new byte is made of one digit of HI and one digit of LO, so you must take the nibbles apart and put them back together.</p>`),
+        D.asm('Rotate by one hexadecimal digit', R`<p>Rotate the 16-bit number HI:LO by one hexadecimal digit to the left, as described above, and leave the result in HI:LO. TMPH and TMPL are free for intermediate results. Use <code>SWAPF</code>, <code>ANDLW</code>, <code>IORWF</code>, <code>MOVF</code> and <code>MOVWF</code>.</p>`, {
+          start: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [0x1234, 0xABCD, 0x00FF, 0xF00F, 0x5A3C].map(v => { const r = ((v << 4) | (v >> 12)) & 0xFFFF; const hx = (x) => x.toString(16).toUpperCase().padStart(4, '0'); return { name: R`$` + hx(v) + R`_{16} \to ` + hx(r) + R`_{16}$`, init: { HI: v >> 8, LO: v & 255 }, expect: { HI: r >> 8, LO: r & 255 } }; }),
+          reqs: [{ re: /\bSWAPF\b/i, msg: 'Use SWAPF to move the nibbles.' }],
+          solution: 'HI   EQU 0x20\nLO   EQU 0x21\nTMPH EQU 0x22\nTMPL EQU 0x23\n\n    SWAPF HI, W       ; 12 -> 21\n    ANDLW 0xF0        ; 20: the 2nd digit, now high\n    MOVWF TMPH\n    SWAPF LO, W       ; 34 -> 43\n    ANDLW 0x0F        ; 03: the 3rd digit, now low\n    IORWF TMPH, F     ; TMPH = 23\n    SWAPF LO, W       ; 43\n    ANDLW 0xF0        ; 40: the 4th digit, now high\n    MOVWF TMPL\n    SWAPF HI, W       ; 21\n    ANDLW 0x0F        ; 01: the 1st digit, now low\n    IORWF TMPL, W     ; 41\n    MOVWF LO\n    MOVF  TMPH, W\n    MOVWF HI          ; HI:LO = 2341\n    GOTO $\n'
+        }, R`For $1234_{16}$ the new high byte is the 2nd and 3rd digits ($23_{16}$) and the new low byte the 4th and 1st digits ($41_{16}$). <code>SWAPF</code> moves a digit to the other half of the byte, <code>ANDLW</code> keeps only the wanted half, and <code>IORWF</code> joins two halves. Build both new bytes in TMPH and TMPL before you overwrite HI and LO.`, { challenge: true, hint: [R`Write the four digits $1, 2, 3, 4$: the new HI is $23$ and the new LO is $41$.`, R`The new HI is (HI with its nibbles swapped, AND $F0_{16}$) OR (LO with its nibbles swapped, AND $0F_{16}$). Build it in TMPH; then build the new LO in the same way.`] })
+      ]
     }
   ]
 });

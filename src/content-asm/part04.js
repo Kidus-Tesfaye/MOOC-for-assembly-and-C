@@ -143,6 +143,18 @@ STORE:
         }, R`Each test is SCORE minus a limit: C $= 1$ means SCORE $\geq$ the limit. Because the highest limit is tested first, a mark that reaches the second test is already known to be below $85$.`, { hint: [R`<code>MOVLW 85</code>, <code>SUBWF SCORE, W</code>, <code>BTFSC STATUS, 0</code>, <code>GOTO GA</code>; then the same for $70$ and $50$.`, R`Each case loads its letter, for example <code>MOVLW 'A'</code>, and all cases end at a common <code>MOVWF GRADE</code>.`] }),
         D.mc('Order of the tests', R`<p>A program tests "SCORE $\geq 50$" first and jumps to the grade C code when it is true; then it tests "SCORE $\geq 70$" and "SCORE $\geq 85$". What grade does a mark of $90$ get?</p>`, ['C', 'A', 'B', 'F'], 0, R`$90 \geq 50$ is already true, so the first test jumps to grade C and the other tests are never reached. With "greater or equal" tests, start from the highest limit.`, { hint: 'Which test is true first?' })
       ]
+    },
+{
+      title: 'Challenge: sort three numbers',
+      objectives: ['You will chain comparisons and exchanges to sort values'],
+      blocks: [
+        D.T(R`<p>Sorting is one of the most common tasks in programming. For three numbers a short recipe is enough: compare the first two and exchange them if they are in the wrong order, do the same with the last two, and then once more with the first two. Each step is a comparison (Section 2) followed by an exchange through a temporary register (Part 3).</p>`),
+        D.asm('Sort three numbers', R`<p>Sort the unsigned numbers in A, B and C1 so that at the end $\text{A} \leq \text{B} \leq \text{C1}$. TEMP is free. The tests try every possible order, and equal values.</p>`, {
+          start: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n; write your instructions here\n\n    GOTO $\n',
+          tests: [[10, 20, 30], [10, 30, 20], [20, 10, 30], [20, 30, 10], [30, 10, 20], [30, 20, 10], [5, 5, 1], [255, 0, 128]].map(v => { const s = v.slice().sort((x, y) => x - y); return { name: R`$` + v.join(R`,\ `) + R`$`, init: { A: v[0], B: v[1], C1: v[2] }, expect: { A: s[0], B: s[1], C1: s[2] } }; }),
+          solution: 'A    EQU 0x20\nB    EQU 0x21\nC1   EQU 0x22\nTEMP EQU 0x23\n\n    MOVF  A, W        ; A and B\n    SUBWF B, W        ; B - A: C = 0 if B < A\n    BTFSC STATUS, 0\n    GOTO  AB_OK\n    MOVF  A, W        ; exchange A and B\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nAB_OK:\n    MOVF  B, W        ; B and C1\n    SUBWF C1, W\n    BTFSC STATUS, 0\n    GOTO  BC_OK\n    MOVF  B, W\n    MOVWF TEMP\n    MOVF  C1, W\n    MOVWF B\n    MOVF  TEMP, W\n    MOVWF C1\nBC_OK:\n    MOVF  A, W        ; A and B once more\n    SUBWF B, W\n    BTFSC STATUS, 0\n    GOTO  DONE\n    MOVF  A, W\n    MOVWF TEMP\n    MOVF  B, W\n    MOVWF A\n    MOVF  TEMP, W\n    MOVWF B\nDONE:\n    GOTO $\n'
+        }, R`The first two steps carry the biggest value to C1; the third step puts the other two in order. $B - A$ with C $= 0$ means $B < A$, the only case that needs an exchange; equal values stay where they are.`, { challenge: true, hint: [R`Write one "compare and exchange" block for A and B: <code>MOVF A, W</code>, <code>SUBWF B, W</code>, skip the exchange when C $= 1$.`, R`Repeat the block for B and C1, then once more for A and B.`] })
+      ]
     }
   ]
 });

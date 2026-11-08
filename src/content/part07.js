@@ -338,6 +338,23 @@ void main(void) {
           solution: '    BSF STATUS, 5\n    BCF TRISC, 0\n    BCF STATUS, 5\n    BSF PORTC, 0\n    GOTO $\n'
         }, 'BCF TRISC, 0 clears only bit 0; the other pins stay inputs.', { hint: 'BCF works on one bit only. Remember the bank of TRISC.' })
       ]
+    },
+{
+      title: 'Challenge: three buttons and a counter',
+      objectives: ['You will detect the moment a button is pressed by comparing the port with its previous value'],
+      blocks: [
+        D.T(R`<p>Activity 4 waits for a press, then for the release. With several buttons that no longer works: while the program waits for one button, it misses the others. The usual solution is <b>edge detection</b>. Read the whole port in every round, and compare it with the value of the previous round:</p>
+$$\text{pressed now} = \text{NOW AND NOT OLD}.$$
+<p>A bit is $1$ only in the round in which that button went from released to pressed, so a button held down for a long time counts only once. Then copy NOW into OLD for the next round.</p>`),
+        D.asm('Three buttons and a counter', R`<p>Three active-high buttons are connected to RB1, RB2 and RB3, and eight LEDs to PORTD, which shows COUNT. Each <b>press</b> (not each round while held) of RB1 adds $1$ to COUNT, of RB2 subtracts $1$ (but never below $0$), and of RB3 resets COUNT to $0$. Configure the pins yourself: PORTD outputs, and the PORTB pins digital (they are analog after a reset). Then loop forever.</p>`, {
+          start: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n; configure the pins, then loop forever\n\nLOOP:\n\n    GOTO LOOP\n',
+          tests: [
+            { name: 'Three presses of RB1, held down', events: [[100, 2], [180, 0], [260, 2], [340, 0], [420, 2], [500, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 3, 'OUT.D': 3 } },
+            { name: 'Up three times, down once', events: [[100, 2], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 4], [480, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 700, limitOk: true, expect: { COUNT: 2, 'OUT.D': 2 } },
+            { name: 'Down at zero, up twice, reset, up', events: [[100, 4], [140, 0], [200, 2], [240, 0], [300, 2], [340, 0], [400, 8], [440, 0], [500, 2], [540, 0]].map(([s, v]) => ({ step: s, pins: { B: v } })), maxSteps: 800, limitOk: true, expect: { COUNT: 1, 'OUT.D': 1 } }],
+          solution: 'COUNT EQU 0x20\nOLD   EQU 0x21\nNOW   EQU 0x22\nEDGES EQU 0x23\n\n    BANKSEL ANSELH\n    CLRF    ANSELH        ; PORTB digital\n    BANKSEL TRISD\n    CLRF    TRISD         ; PORTD outputs\n    BANKSEL PORTD\n    CLRF    COUNT\n    CLRF    OLD\nLOOP:\n    MOVF    PORTB, W\n    MOVWF   NOW\n    COMF    OLD, W        ; NOT OLD\n    ANDWF   NOW, W        ; buttons pressed in this round\n    MOVWF   EDGES\n    MOVF    NOW, W\n    MOVWF   OLD           ; remember for the next round\n    BTFSC   EDGES, 1      ; RB1: plus one\n    INCF    COUNT, F\n    BTFSS   EDGES, 2      ; RB2: minus one, not below 0\n    GOTO    NO_DOWN\n    MOVF    COUNT, F\n    BTFSS   STATUS, 2\n    DECF    COUNT, F\nNO_DOWN:\n    BTFSC   EDGES, 3      ; RB3: reset\n    CLRF    COUNT\n    MOVF    COUNT, W\n    MOVWF   PORTD\n    GOTO    LOOP\n'
+        }, R`$\text{NOW AND NOT OLD}$ has a $1$ only for a button that is pressed now and was released in the previous round, so holding a button counts once. <code>MOVF COUNT, F</code> tests COUNT for zero before the decrement.`, { challenge: true, hint: [R`Clear ANSELH (bank 3) and TRISD (bank 1) first, then go back to bank 0.`, R`In the loop: NOW $=$ PORTB; EDGES $=$ NOW AND NOT OLD (<code>COMF OLD, W</code> then <code>ANDWF NOW, W</code>); OLD $=$ NOW; then test the bits 1, 2 and 3 of EDGES.`] })
+      ]
     }
   ]
 });
