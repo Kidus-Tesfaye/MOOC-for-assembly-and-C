@@ -42,8 +42,8 @@ COURSES = [
             'filePrefix': 'asm-c-mooc-progress-',
             'groups': {'1': 'Introduction to Programming', '2': 'Advanced Course in Programming'},
             'footer': 'This course was made for learning <b>C</b> and <b>assembly</b> programming on the <b>PIC16F887</b>. '
-                      'It follows the lecture slides <i>Microcontroller Systems ELE3614</i> by Nabil Karami, PhD, and the lab '
-                      'activities that come with them.',
+                      'It follows the lecture slides <i>Microcontroller Systems ELE3614</i> and the lab activities that come '
+                      'with them.',
             'engine': 'the C interpreter and the PIC16F887 simulator are part of this single file',
             'heroCode': {'lang': 'c', 'title': 'blink.c', 'text': '#include <xc.h>\n#define _XTAL_FREQ 4000000\n\nvoid main(void) {\n    TRISD = 0x00;      // PORTD: outputs\n    while (1) {\n        RD0 = !RD0;    // toggle the LED\n        __delay_ms(500);\n    }\n}'},
             'sibling': {'title': 'Assembly Programming MOOC', 'href': 'assembly.html', 'appId': 'assembly-mooc',
@@ -74,8 +74,8 @@ COURSES = [
             'filePrefix': 'asm-mooc-progress-',
             'groups': {'1': 'Introduction to Assembly Programming', '2': 'Advanced Assembly Programming'},
             'footer': 'This course was made for learning <b>assembly</b> programming on the <b>PIC16F887</b>. '
-                      'It follows the lecture slides <i>Microcontroller Systems ELE3614</i> by Nabil Karami, PhD, and the lab '
-                      'activities that come with them.',
+                      'It follows the lecture slides <i>Microcontroller Systems ELE3614</i> and the lab activities that come '
+                      'with them.',
             'engine': 'the PIC16F887 simulator is part of this single file',
             'heroCode': {'lang': 'asm', 'title': 'blink.s', 'text': '; blink the LED on RD0\nMAIN:   BANKSEL TRISD\n        CLRF    TRISD       ; PORTD: outputs\n        BANKSEL PORTD\nLOOP:   BSF     PORTD, 0    ; LED on\n        CALL    DELAY\n        BCF     PORTD, 0    ; LED off\n        CALL    DELAY\n        GOTO    LOOP'},
             'sibling': {'title': 'Assembly and C Programming MOOC', 'href': 'index.html', 'appId': 'assembly-and-c-mooc',

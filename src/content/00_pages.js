@@ -25,7 +25,7 @@ D.page({
 D.page({
   slug: 'about-the-material', title: 'About the material and its tools', nav: false,
   blocks: [
-    D.T(R`<p>The course follows the lecture slides <i>Microcontroller Systems ELE3614</i> (Nabil Karami, PhD) and the lab activities written for them. The order of the topics has been rearranged so that programming ideas come first and hardware details are introduced only when a program needs them.</p>`),
+    D.T(R`<p>The course follows the lecture slides <i>Microcontroller Systems ELE3614</i> and the lab activities written for them. The order of the topics has been rearranged so that programming ideas come first and hardware details are introduced only when a program needs them.</p>`),
     D.H('From your code to the chip'),
     D.TABLE(['Tool', 'What it does'], [
       ['<b>MPLAB X IDE</b>', 'The official Microchip program for writing, building and debugging code. IDE means <i>Integrated Development Environment</i>.'],
